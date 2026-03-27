@@ -19,6 +19,7 @@ export function NewMovementModal({ isOpen, onClose, type }: Props) {
   const [concept, setConcept] = useState('');
   const [customConcept, setCustomConcept] = useState('');
   const [description, setDescription] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('cash');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function NewMovementModal({ isOpen, onClose, type }: Props) {
       setConcept('');
       setCustomConcept('');
       setDescription('');
+      setPaymentMethod('cash');
       setError('');
     }
   }, [isOpen, type]);
@@ -53,7 +55,7 @@ export function NewMovementModal({ isOpen, onClose, type }: Props) {
       return;
     }
 
-    const success = await addMovement(type, numAmount, finalConcept, description || undefined);
+    const success = await addMovement(type, numAmount, finalConcept, description || undefined, type === 'expense' ? paymentMethod : undefined);
     
     if (success) {
       onClose();
@@ -130,6 +132,44 @@ export function NewMovementModal({ isOpen, onClose, type }: Props) {
               />
             )}
           </div>
+
+          {/* Medio de pago (solo para egresos) */}
+          {!isIncome && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Medio de pago
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('cash')}
+                  className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors
+                    ${paymentMethod === 'cash'
+                      ? 'bg-orange-100 border-orange-500 text-orange-700'
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                  💵 Efectivo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('transfer')}
+                  className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors
+                    ${paymentMethod === 'transfer'
+                      ? 'bg-blue-100 border-blue-500 text-blue-700'
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                  🏦 Transferencia
+                </button>
+              </div>
+              {paymentMethod === 'transfer' && (
+                <p className="text-xs text-blue-600 mt-1">
+                  Los egresos por transferencia no afectan el saldo de caja en efectivo.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Descripción */}
           <div>

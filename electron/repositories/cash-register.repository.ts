@@ -21,6 +21,7 @@ export interface CashMovement {
   amount: number;
   concept: string;
   description: string | null;
+  payment_method: string | null;
   created_at: number;
 }
 
@@ -44,6 +45,7 @@ export interface CashMovementDTO {
   amount: number;
   concept: string;
   description: string | null;
+  paymentMethod: 'cash' | 'transfer';
   createdAt: Date;
 }
 
@@ -70,6 +72,7 @@ function toMovementDTO(row: CashMovement): CashMovementDTO {
     amount: row.amount,
     concept: row.concept,
     description: row.description,
+    paymentMethod: (row.payment_method as 'cash' | 'transfer') || 'cash',
     createdAt: new Date(row.created_at * 1000),
   };
 }
@@ -145,11 +148,12 @@ export class CashRegisterRepository {
       const salesByMethod = this.getSalesByPaymentMethod(registerId);
 
       // Movimientos manuales (ingresos/egresos) excluyendo ventas
+      // Solo los egresos en efectivo afectan el saldo de caja física
       const movementsStmt = sqlite.prepare(`
-        SELECT 
+        SELECT
           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as totalIncome,
-          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as totalExpense
-        FROM cash_movements 
+          COALESCE(SUM(CASE WHEN type = 'expense' AND COALESCE(payment_method, 'cash') = 'cash' THEN amount ELSE 0 END), 0) as totalExpense
+        FROM cash_movements
         WHERE cash_register_id = ? AND type != 'sale'
       `);
 
@@ -177,12 +181,13 @@ export class CashRegisterRepository {
       if (!register) return null;
 
       const stmt = sqlite.prepare(`
-        SELECT 
+        SELECT
           COALESCE(SUM(CASE WHEN type = 'sale' THEN amount ELSE 0 END), 0) as totalSales,
           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as totalIncome,
           COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as totalExpense,
+          COALESCE(SUM(CASE WHEN type = 'expense' AND COALESCE(payment_method, 'cash') = 'transfer' THEN amount ELSE 0 END), 0) as totalExpenseTransfer,
           COUNT(CASE WHEN type = 'sale' THEN 1 END) as salesCount
-        FROM cash_movements 
+        FROM cash_movements
         WHERE cash_register_id = ?
       `);
       
@@ -235,13 +240,14 @@ export class CashRegisterRepository {
     amount: number;
     concept: string;
     description?: string;
+    paymentMethod?: 'cash' | 'transfer';
   }): CashMovementDTO | null {
     try {
       const stmt = sqlite.prepare(`
-        INSERT INTO cash_movements (cash_register_id, type, amount, concept, description, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO cash_movements (cash_register_id, type, amount, concept, description, payment_method, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
-      
+
       const now = Math.floor(Date.now() / 1000);
       const result = stmt.run(
         data.cashRegisterId,
@@ -249,6 +255,7 @@ export class CashRegisterRepository {
         data.amount,
         data.concept,
         data.description || null,
+        data.paymentMethod || 'cash',
         now
       );
       
@@ -346,26 +353,33 @@ export class CashRegisterRepository {
       const salesByMethod = this.getSalesByPaymentMethod(registerId);
       
       // Movimientos de caja (ingresos/egresos manuales)
+      // Solo egresos en efectivo afectan el saldo físico de caja
       const movementsStmt = sqlite.prepare(`
-        SELECT 
+        SELECT
           COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as totalIncome,
-          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as totalExpense
-        FROM cash_movements 
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as totalExpense,
+          COALESCE(SUM(CASE WHEN type = 'expense' AND COALESCE(payment_method, 'cash') = 'cash' THEN amount ELSE 0 END), 0) as totalExpenseCash,
+          COALESCE(SUM(CASE WHEN type = 'expense' AND payment_method = 'transfer' THEN amount ELSE 0 END), 0) as totalExpenseTransfer
+        FROM cash_movements
         WHERE cash_register_id = ? AND type != 'sale'
       `);
-      
+
       const movements = movementsStmt.get(registerId) as {
         totalIncome: number;
         totalExpense: number;
+        totalExpenseCash: number;
+        totalExpenseTransfer: number;
       };
 
-      // Cálculos de efectivo
+      // Cálculos de efectivo (solo egresos en efectivo restan de la caja física)
       const cashFlow = {
         opening: register.openingAmount,
         salesCash: salesByMethod.cash.total,
         income: movements.totalIncome,
         expense: movements.totalExpense,
-        expected: register.openingAmount + salesByMethod.cash.total + movements.totalIncome - movements.totalExpense,
+        expenseCash: movements.totalExpenseCash,
+        expenseTransfer: movements.totalExpenseTransfer,
+        expected: register.openingAmount + salesByMethod.cash.total + movements.totalIncome - movements.totalExpenseCash,
       };
 
       // Cálculos electrónicos

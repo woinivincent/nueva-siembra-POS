@@ -15,7 +15,7 @@ interface CashRegisterState {
   closeRegister: (closingAmount: number, notes?: string) => Promise<boolean>;
   loadMovements: () => Promise<void>;
   loadSummary: () => Promise<void>;
-  addMovement: (type: 'income' | 'expense', amount: number, concept: string, description?: string) => Promise<boolean>;
+  addMovement: (type: 'income' | 'expense', amount: number, concept: string, description?: string, paymentMethod?: 'cash' | 'transfer') => Promise<boolean>;
   deleteMovement: (id: number) => Promise<boolean>;
   clearError: () => void;
 }
@@ -97,7 +97,7 @@ export const useCashRegisterStore = create<CashRegisterState>((set, get) => ({
     }
   },
 
-  addMovement: async (type, amount, concept, description) => {
+  addMovement: async (type, amount, concept, description, paymentMethod) => {
     const { currentRegister } = get();
     if (!currentRegister) return false;
 
@@ -109,6 +109,7 @@ export const useCashRegisterStore = create<CashRegisterState>((set, get) => ({
         amount,
         concept,
         description,
+        paymentMethod,
       });
       
       // Recargar movimientos y resumen

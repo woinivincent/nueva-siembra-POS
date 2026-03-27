@@ -186,3 +186,131 @@ export class ReportsRepository {
   }
 }
 export const reportsRepository = new ReportsRepository();
+
+export interface ExpenseReportItem {
+  id: number;
+  date: string;
+  time: string;
+  concept: string;
+  description: string | null;
+  amount: number;
+  paymentMethod: 'cash' | 'transfer';
+}
+
+export interface ReserveReportItem {
+  id: number;
+  date: string;
+  time: string;
+  type: 'income' | 'expense';
+  concept: string;
+  category: string | null;
+  amount: number;
+}
+
+export interface ExpensesReportSummary {
+  totalExpenses: number;
+  totalExpensesCash: number;
+  totalExpensesTransfer: number;
+  expenses: ExpenseReportItem[];
+  reserveMovements: ReserveReportItem[];
+  totalReserveIn: number;
+  totalReserveOut: number;
+}
+
+export class ExpensesReportRepository {
+  getExpensesReport(startDate: string, endDate: string): ExpensesReportSummary {
+    try {
+      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000);
+      const endTimestamp = Math.floor(new Date(endDate + 'T23:59:59').getTime() / 1000);
+
+      // Egresos de caja (tipo expense, excluyendo ventas)
+      const expensesStmt = sqlite.prepare(`
+        SELECT
+          cm.id,
+          strftime('%Y-%m-%d', cm.created_at, 'unixepoch', 'localtime') as date,
+          strftime('%H:%M', cm.created_at, 'unixepoch', 'localtime') as time,
+          cm.concept,
+          cm.description,
+          cm.amount,
+          COALESCE(cm.payment_method, 'cash') as payment_method
+        FROM cash_movements cm
+        WHERE cm.type = 'expense'
+          AND cm.created_at >= ? AND cm.created_at <= ?
+        ORDER BY cm.created_at DESC
+      `);
+
+      const expenses = expensesStmt.all(startTimestamp, endTimestamp) as any[];
+
+      const totalExpenses = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
+      const totalExpensesCash = expenses
+        .filter((e: any) => e.payment_method === 'cash')
+        .reduce((sum: number, e: any) => sum + e.amount, 0);
+      const totalExpensesTransfer = expenses
+        .filter((e: any) => e.payment_method === 'transfer')
+        .reduce((sum: number, e: any) => sum + e.amount, 0);
+
+      // Movimientos de caja reserva
+      const reserveStmt = sqlite.prepare(`
+        SELECT
+          id,
+          strftime('%Y-%m-%d', created_at, 'unixepoch', 'localtime') as date,
+          strftime('%H:%M', created_at, 'unixepoch', 'localtime') as time,
+          type,
+          concept,
+          category,
+          amount
+        FROM reserve_fund
+        WHERE created_at >= ? AND created_at <= ?
+        ORDER BY created_at DESC
+      `);
+
+      const reserveMovements = reserveStmt.all(startTimestamp, endTimestamp) as any[];
+
+      const totalReserveIn = reserveMovements
+        .filter((r: any) => r.type === 'income')
+        .reduce((sum: number, r: any) => sum + r.amount, 0);
+      const totalReserveOut = reserveMovements
+        .filter((r: any) => r.type === 'expense')
+        .reduce((sum: number, r: any) => sum + r.amount, 0);
+
+      return {
+        totalExpenses,
+        totalExpensesCash,
+        totalExpensesTransfer,
+        expenses: expenses.map((e: any) => ({
+          id: e.id,
+          date: e.date,
+          time: e.time,
+          concept: e.concept,
+          description: e.description,
+          amount: e.amount,
+          paymentMethod: e.payment_method,
+        })),
+        reserveMovements: reserveMovements.map((r: any) => ({
+          id: r.id,
+          date: r.date,
+          time: r.time,
+          type: r.type,
+          concept: r.concept,
+          category: r.category,
+          amount: r.amount,
+        })),
+        totalReserveIn,
+        totalReserveOut,
+      };
+    } catch (error) {
+      console.error('Error in getExpensesReport:', error);
+      return {
+        totalExpenses: 0,
+        totalExpensesCash: 0,
+        totalExpensesTransfer: 0,
+        expenses: [],
+        reserveMovements: [],
+        totalReserveIn: 0,
+        totalReserveOut: 0,
+      };
+    }
+  }
+}
+
+export const expensesReportRepository = new ExpensesReportRepository();

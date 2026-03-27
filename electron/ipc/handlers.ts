@@ -5,7 +5,7 @@ import { cashRegisterRepository } from "../repositories/cash-register.repository
 import { salesRepository } from "../repositories/sales.repository.js";
 import { customersRepository } from '../repositories/customers.repository.js';
 import { suppliersRepository } from '../repositories/suppliers.repository.js';
-import { reportsRepository } from '../repositories/reports.repository.js';
+import { reportsRepository, expensesReportRepository } from '../repositories/reports.repository.js';
 import { reserveFundRepository } from '../repositories/reserve-fund.repository.js';
 import { dashboardRepository } from '../repositories/dashboard.repository.js';
 import { settingsRepository } from '../repositories/settings.repository.js';
@@ -185,6 +185,7 @@ export function registerIpcHandlers() {
         amount: number;
         concept: string;
         description?: string;
+        paymentMethod?: "cash" | "transfer";
       },
     ) => {
       try {
@@ -434,6 +435,15 @@ ipcMain.handle('reports:getSalesForExport', (_event, startDate: string, endDate:
     return reportsRepository.getSalesForExport(startDate, endDate);
   } catch (error) {
     console.error('Error getting sales for export:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('reports:getExpensesReport', (_event, startDate: string, endDate: string) => {
+  try {
+    return expensesReportRepository.getExpensesReport(startDate, endDate);
+  } catch (error) {
+    console.error('Error getting expenses report:', error);
     throw error;
   }
 });
