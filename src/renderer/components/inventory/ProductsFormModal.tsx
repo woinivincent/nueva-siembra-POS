@@ -1,0 +1,570 @@
+// src/renderer/components/inventory/ProductFormModal.tsx
+import { useState, useEffect } from 'react';
+import { X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import type { Product } from '@/shared/types/electron';
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+  product: Product | null;
+  categories: string[];
+}
+
+const UNITS = [
+  { value: 'ud', label: 'Unidad' },
+  { value: 'kg', label: 'Kilogramo' },
+];
+
+export function ProductFormModal({ isOpen, onClose, onSaved, product, categories }: Props) {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    barcode: '',
+    category: '',
+    newCategory: '',
+    price: '',
+    priceCard: '',
+    cost: '',
+    stock: '',
+    stockMin: '',
+    unit: 'ud' as 'ud' | 'kg',
+    isFavorite: false,
+    favoriteKey: '',
+    image: null as string | null,
+  });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [useNewCategory, setUseNewCategory] = useState(false);
+  const [autoCalcCard, setAutoCalcCard] = useState(true);
+
+  const isEditing = !!product;
+
+  useEffect(() => {
+    if (isOpen) {
+      if (product) {
+        const hasDifferentCardPrice = product.priceCard !== product.price;
+        setFormData({
+          name: product.name,
+          description: product.description || '',
+          barcode: product.barcode || '',
+          category: product.category,
+          newCategory: '',
+          price: product.price.toString(),
+          priceCard: product.priceCard.toString(),
+          cost: product.cost?.toString() || '',
+          stock: product.stock.toString(),
+          stockMin: product.stockMin?.toString() || '',
+          unit: product.unit,
+          isFavorite: product.isFavorite,
+          favoriteKey: product.favoriteKey || '',
+          image: product.image || null,
+        });
+        setAutoCalcCard(!hasDifferentCardPrice);
+        setUseNewCategory(false);
+        
+        // Cargar preview de imagen existente
+        if (product.image) {
+          loadImagePreview(product.image);
+        } else {
+          setImagePreview(null);
+        }
+      } else {
+        setFormData({
+          name: '',
+          description: '',
+          barcode: '',
+          category: categories[0] || '',
+          newCategory: '',
+          price: '',
+          priceCard: '',
+          cost: '',
+          stock: '0',
+          stockMin: '0',
+          unit: 'ud',
+          isFavorite: false,
+          favoriteKey: '',
+          image: null,
+        });
+        setAutoCalcCard(true);
+        setUseNewCategory(categories.length === 0);
+        setImagePreview(null);
+      }
+      setError(null);
+    }
+  }, [isOpen, product, categories]);
+
+  const loadImagePreview = async (imagePath: string) => {
+    try {
+      const base64 = await window.electronAPI.images.getBase64(imagePath);
+      setImagePreview(base64);
+    } catch (err) {
+      console.error('Error loading image preview:', err);
+      setImagePreview(null);
+    }
+  };
+
+  // Calcular precio tarjeta automáticamente (10% más)
+  useEffect(() => {
+    if (autoCalcCard && formData.price) {
+      const basePrice = parseFloat(formData.price);
+      if (!isNaN(basePrice)) {
+        const cardPrice = (basePrice * 1.10).toFixed(2);
+        setFormData(prev => ({ ...prev, priceCard: cardPrice }));
+      }
+    }
+  }, [formData.price, autoCalcCard]);
+
+  if (!isOpen) return null;
+
+  const handleChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSelectImage = async () => {
+    try {
+      const selectedPath = await window.electronAPI.images.select();
+      if (selectedPath) {
+        // Guardar la imagen
+        const savedPath = await window.electronAPI.images.save(selectedPath);
+        setFormData(prev => ({ ...prev, image: savedPath }));
+        
+        // Cargar preview
+        const base64 = await window.electronAPI.images.getBase64(savedPath);
+        setImagePreview(base64);
+      }
+    } catch (err) {
+      console.error('Error selecting image:', err);
+      setError('Error al seleccionar la imagen');
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (formData.image) {
+      // Si es una imagen nueva (no del producto original), eliminarla
+      if (!product?.image || formData.image !== product.image) {
+        await window.electronAPI.images.delete(formData.image);
+      }
+    }
+    setFormData(prev => ({ ...prev, image: null }));
+    setImagePreview(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!formData.name.trim()) {
+      setError('El nombre es requerido');
+      return;
+    }
+
+    const category = useNewCategory ? formData.newCategory.trim() : formData.category;
+    if (!category) {
+      setError('La categoría es requerida');
+      return;
+    }
+
+    const price = parseFloat(formData.price);
+    if (isNaN(price) || price <= 0) {
+      setError('El precio efectivo debe ser mayor a 0');
+      return;
+    }
+
+    const priceCard = parseFloat(formData.priceCard);
+    if (isNaN(priceCard) || priceCard <= 0) {
+      setError('El precio tarjeta debe ser mayor a 0');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Si estamos editando y cambiamos la imagen, eliminar la anterior
+      if (isEditing && product.image && product.image !== formData.image) {
+        await window.electronAPI.images.delete(product.image);
+      }
+
+      const data = {
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        barcode: formData.barcode.trim() || null,
+        category,
+        price,
+        priceCard,
+        cost: formData.cost ? parseFloat(formData.cost) : 0,
+        stock: parseFloat(formData.stock) || 0,
+        stockMin: parseFloat(formData.stockMin) || 0,
+        unit: formData.unit,
+        isFavorite: formData.isFavorite,
+        favoriteKey: formData.isFavorite ? formData.favoriteKey.trim() || null : null,
+        image: formData.image,
+      };
+
+      if (isEditing) {
+        await window.electronAPI.products.update(product.id, data);
+      } else {
+        await window.electronAPI.products.create(data);
+      }
+
+      onSaved();
+    } catch (err: any) {
+      console.error('Error saving product:', err);
+      setError(err.message || 'Error al guardar el producto');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const priceDiff = formData.price && formData.priceCard
+    ? (((parseFloat(formData.priceCard) - parseFloat(formData.price)) / parseFloat(formData.price)) * 100).toFixed(1)
+    : '0';
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">
+            {isEditing ? 'Editar Producto' : 'Nuevo Producto'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Imagen del producto */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Imagen del producto
+            </label>
+            <div className="flex items-start gap-4">
+              {/* Preview */}
+              <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden flex items-center justify-center bg-gray-50">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon className="w-10 h-10 text-gray-400" />
+                )}
+              </div>
+              
+              {/* Botones */}
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleSelectImage}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  {imagePreview ? 'Cambiar imagen' : 'Subir imagen'}
+                </button>
+                
+                {imagePreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Quitar imagen
+                  </button>
+                )}
+                
+                <p className="text-xs text-gray-500 mt-1">
+                  JPG, PNG, WebP o GIF. Máx 5MB.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Nombre y Código */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nombre *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                placeholder="Nombre del producto"
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Código de barras
+              </label>
+              <input
+                type="text"
+                value={formData.barcode}
+                onChange={(e) => handleChange('barcode', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-gray-900 bg-white"
+                placeholder="Escanear o ingresar código"
+              />
+            </div>
+          </div>
+
+          {/* Descripción */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Descripción
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none text-gray-900 bg-white"
+              placeholder="Descripción opcional del producto"
+            />
+          </div>
+
+          {/* Categoría */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Categoría *
+            </label>
+            <div className="flex gap-2">
+              {categories.length > 0 && !useNewCategory ? (
+                <>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => handleChange('category', e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setUseNewCategory(true)}
+                    className="px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg text-sm"
+                  >
+                    + Nueva
+                  </button>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={formData.newCategory}
+                    onChange={(e) => handleChange('newCategory', e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                    placeholder="Nueva categoría"
+                  />
+                  {categories.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setUseNewCategory(false)}
+                      className="px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm"
+                    >
+                      Existente
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* PRECIOS */}
+          <div className="bg-blue-50 rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-blue-900">💰 Lista de Precios</h3>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={autoCalcCard}
+                  onChange={(e) => setAutoCalcCard(e.target.checked)}
+                  className="rounded text-blue-600"
+                />
+                <span className="text-blue-700">Auto +10% tarjeta</span>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-green-700 mb-1">
+                  💵 Precio Efectivo *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => handleChange('price', e.target.value)}
+                    className="w-full pl-8 pr-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-blue-700 mb-1">
+                  💳 Precio Tarjeta/Transf. *
+                  {priceDiff !== '0' && parseFloat(priceDiff) > 0 && (
+                    <span className="ml-2 text-xs text-blue-500">(+{priceDiff}%)</span>
+                  )}
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.priceCard}
+                    onChange={(e) => {
+                      setAutoCalcCard(false);
+                      handleChange('priceCard', e.target.value);
+                    }}
+                    className="w-full pl-8 pr-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Costo y Unidad */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Costo
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.cost}
+                  onChange={(e) => handleChange('cost', e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Unidad
+              </label>
+              <select
+                value={formData.unit}
+                onChange={(e) => handleChange('unit', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+              >
+                {UNITS.map(u => (
+                  <option key={u.value} value={u.value}>{u.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Stock */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stock actual
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.stock}
+                onChange={(e) => handleChange('stock', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stock mínimo
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.stockMin}
+                onChange={(e) => handleChange('stockMin', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          {/* Favorito */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.isFavorite}
+                onChange={(e) => handleChange('isFavorite', e.target.checked)}
+                className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+              />
+              <div>
+                <span className="font-medium text-gray-900">⭐ Producto favorito</span>
+                <p className="text-sm text-gray-500">Aparecerá en los botones de acceso rápido</p>
+              </div>
+            </label>
+
+            {formData.isFavorite && (
+              <div className="mt-3 ml-8">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tecla de acceso rápido
+                </label>
+                <select
+                  value={formData.favoriteKey}
+                  onChange={(e) => handleChange('favoriteKey', e.target.value)}
+                  className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                >
+                  <option value="">Ninguna</option>
+                  {['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'].map(key => (
+                    <option key={key} value={key}>{key}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          {/* Botones */}
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+            >
+              {isLoading ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Crear Producto'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
