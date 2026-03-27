@@ -41,6 +41,7 @@ interface CashMovement {
   amount: number;
   concept: string;
   description: string | null;
+  paymentMethod: "cash" | "transfer";
   createdAt: Date;
 }
 
@@ -130,6 +131,7 @@ const electronAPI = {
       amount: number;
       concept: string;
       description?: string;
+      paymentMethod?: "cash" | "transfer";
     }): Promise<CashMovement> => ipcRenderer.invoke("cash:addMovement", data),
     deleteMovement: (id: number): Promise<boolean> =>
       ipcRenderer.invoke("cash:deleteMovement", id),
@@ -215,6 +217,8 @@ const electronAPI = {
     getSalesForExport: (startDate: string, endDate: string): Promise<any[]> =>
       ipcRenderer.invoke("reports:getSalesForExport", startDate, endDate),
     exportExcel: (startDate: string, endDate: string) => ipcRenderer.invoke('reports:exportExcel', startDate, endDate),
+    getExpensesReport: (startDate: string, endDate: string): Promise<any> =>
+      ipcRenderer.invoke("reports:getExpensesReport", startDate, endDate),
   },
   // Reserve Fund (Caja Reserva)
 reserve: {

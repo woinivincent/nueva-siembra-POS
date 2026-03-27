@@ -24,6 +24,17 @@ export function initializeDatabase() {
 
 function runMigrations() {
   try {
+    // Migración: agregar payment_method a cash_movements
+    const movementsInfo = sqlite
+      .prepare("PRAGMA table_info(cash_movements)")
+      .all() as any[];
+    const hasPaymentMethod = movementsInfo.some((col: any) => col.name === "payment_method");
+    if (!hasPaymentMethod) {
+      console.log("📦 Ejecutando migración: agregar payment_method a cash_movements...");
+      sqlite.exec(`ALTER TABLE cash_movements ADD COLUMN payment_method TEXT DEFAULT 'cash'`);
+      console.log("✅ Migración completada");
+    }
+
     // Verificar si la columna price_card ya existe
     const tableInfo = sqlite
       .prepare("PRAGMA table_info(products)")
