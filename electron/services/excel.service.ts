@@ -62,11 +62,33 @@ function applyBorders(row: ExcelJS.Row, colCount: number) {
   }
 }
 
+export interface ExpenseExportData {
+  id: number;
+  date: string;
+  time: string;
+  concept: string;
+  description: string | null;
+  amount: number;
+  paymentMethod: 'cash' | 'transfer';
+}
+
+export interface ReserveExportData {
+  id: number;
+  date: string;
+  time: string;
+  type: 'income' | 'expense';
+  concept: string;
+  category: string | null;
+  amount: number;
+}
+
 export async function generateSalesExcel(
-  sales: SaleExportData[], 
-  startDate: string, 
+  sales: SaleExportData[],
+  startDate: string,
   endDate: string,
-  businessName: string = 'NUEVA SIEMBRA'
+  businessName: string = 'NUEVA SIEMBRA',
+  expenses: ExpenseExportData[] = [],
+  reserveMovements: ReserveExportData[] = []
 ): Promise<string | null> {
   // Mostrar diálogo para elegir dónde guardar
   const { filePath, canceled } = await dialog.showSaveDialog({
@@ -313,6 +335,158 @@ export async function generateSalesExcel(
   wsFechas.getColumn(2).width = 18;
   wsFechas.getColumn(3).width = 18;
   wsFechas.getColumn(4).width = 18;
+
+  // ==================== HOJA 5: EGRESOS ====================
+  const wsEgresos = workbook.addWorksheet('Egresos');
+
+  wsEgresos.mergeCells('A1:F1');
+  const titleEgresos = wsEgresos.getCell('A1');
+  titleEgresos.value = 'EGRESOS DE CAJA';
+  applyTitleStyle(titleEgresos, 'FFC62828');
+  wsEgresos.getRow(1).height = 30;
+
+  // Resumen egresos
+  const totalEgresos = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalEgresosCash = expenses.filter(e => e.paymentMethod === 'cash').reduce((sum, e) => sum + e.amount, 0);
+  const totalEgresosTransfer = expenses.filter(e => e.paymentMethod === 'transfer').reduce((sum, e) => sum + e.amount, 0);
+
+  wsEgresos.getCell('A3').value = 'Período:';
+  wsEgresos.getCell('A3').font = { bold: true };
+  wsEgresos.getCell('B3').value = `${startDate} a ${endDate}`;
+
+  wsEgresos.getCell('A5').value = 'Total Egresos';
+  wsEgresos.getCell('B5').value = totalEgresos;
+  wsEgresos.getCell('B5').numFmt = '"$"#,##0.00';
+  wsEgresos.getCell('B5').font = { bold: true, color: { argb: 'FFC62828' } };
+
+  wsEgresos.getCell('A6').value = 'Egresos Efectivo';
+  wsEgresos.getCell('B6').value = totalEgresosCash;
+  wsEgresos.getCell('B6').numFmt = '"$"#,##0.00';
+
+  wsEgresos.getCell('A7').value = 'Egresos Transferencia';
+  wsEgresos.getCell('B7').value = totalEgresosTransfer;
+  wsEgresos.getCell('B7').numFmt = '"$"#,##0.00';
+
+  // Headers detalle
+  const headerEgresos = wsEgresos.getRow(10);
+  ['Fecha', 'Hora', 'Concepto', 'Descripción', 'Medio de Pago', 'Monto'].forEach((h, i) => {
+    const cell = headerEgresos.getCell(i + 1);
+    cell.value = h;
+    applyHeaderStyle(cell);
+  });
+  applyBorders(headerEgresos, 6);
+
+  // Datos egresos
+  expenses.forEach((e, idx) => {
+    const row = wsEgresos.getRow(idx + 11);
+    row.getCell(1).value = e.date;
+    row.getCell(2).value = e.time;
+    row.getCell(3).value = e.concept;
+    row.getCell(4).value = e.description || '';
+    row.getCell(5).value = e.paymentMethod === 'transfer' ? 'Transferencia' : 'Efectivo';
+    row.getCell(6).value = e.amount;
+    row.getCell(6).numFmt = '"$"#,##0.00';
+
+    if (idx % 2 === 0) {
+      for (let col = 1; col <= 6; col++) {
+        row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF8F8' } };
+      }
+    }
+    applyBorders(row, 6);
+  });
+
+  if (expenses.length === 0) {
+    wsEgresos.getCell('A11').value = 'Sin egresos en el período';
+    wsEgresos.getCell('A11').font = { italic: true, color: { argb: 'FF999999' } };
+  } else {
+    // Fila de total
+    const totEgresosRow = wsEgresos.getRow(expenses.length + 11);
+    totEgresosRow.getCell(1).value = 'TOTAL';
+    totEgresosRow.getCell(6).value = totalEgresos;
+    totEgresosRow.getCell(6).numFmt = '"$"#,##0.00';
+    totEgresosRow.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9C4' } };
+    });
+    applyBorders(totEgresosRow, 6);
+  }
+
+  wsEgresos.getColumn(1).width = 12;
+  wsEgresos.getColumn(2).width = 8;
+  wsEgresos.getColumn(3).width = 28;
+  wsEgresos.getColumn(4).width = 25;
+  wsEgresos.getColumn(5).width = 16;
+  wsEgresos.getColumn(6).width = 14;
+
+  // ==================== HOJA 6: CAJA RESERVA ====================
+  const wsReserva = workbook.addWorksheet('Caja Reserva');
+
+  wsReserva.mergeCells('A1:F1');
+  const titleReserva = wsReserva.getCell('A1');
+  titleReserva.value = 'MOVIMIENTOS CAJA RESERVA';
+  applyTitleStyle(titleReserva, 'FF7B1FA2');
+  wsReserva.getRow(1).height = 30;
+
+  const totalReservaIn = reserveMovements.filter(r => r.type === 'income').reduce((sum, r) => sum + r.amount, 0);
+  const totalReservaOut = reserveMovements.filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0);
+
+  wsReserva.getCell('A3').value = 'Período:';
+  wsReserva.getCell('A3').font = { bold: true };
+  wsReserva.getCell('B3').value = `${startDate} a ${endDate}`;
+
+  wsReserva.getCell('A5').value = 'Total Ingresos Reserva';
+  wsReserva.getCell('B5').value = totalReservaIn;
+  wsReserva.getCell('B5').numFmt = '"$"#,##0.00';
+  wsReserva.getCell('B5').font = { color: { argb: 'FF2E7D32' } };
+
+  wsReserva.getCell('A6').value = 'Total Egresos Reserva';
+  wsReserva.getCell('B6').value = totalReservaOut;
+  wsReserva.getCell('B6').numFmt = '"$"#,##0.00';
+  wsReserva.getCell('B6').font = { color: { argb: 'FFC62828' } };
+
+  wsReserva.getCell('A7').value = 'Balance del período';
+  wsReserva.getCell('B7').value = totalReservaIn - totalReservaOut;
+  wsReserva.getCell('B7').numFmt = '"$"#,##0.00';
+  wsReserva.getCell('B7').font = { bold: true };
+
+  // Headers
+  const headerReserva = wsReserva.getRow(10);
+  ['Fecha', 'Hora', 'Tipo', 'Concepto', 'Categoría', 'Monto'].forEach((h, i) => {
+    const cell = headerReserva.getCell(i + 1);
+    cell.value = h;
+    applyHeaderStyle(cell);
+  });
+  applyBorders(headerReserva, 6);
+
+  // Datos reserva
+  reserveMovements.forEach((r, idx) => {
+    const row = wsReserva.getRow(idx + 11);
+    row.getCell(1).value = r.date;
+    row.getCell(2).value = r.time;
+    row.getCell(3).value = r.type === 'income' ? 'Ingreso' : 'Egreso';
+    row.getCell(4).value = r.concept;
+    row.getCell(5).value = r.category || 'Sin categoría';
+    row.getCell(6).value = r.type === 'income' ? r.amount : -r.amount;
+    row.getCell(6).numFmt = '"$"#,##0.00';
+
+    const bgColor = r.type === 'income' ? 'FFE8F5E9' : 'FFFFEBEE';
+    for (let col = 1; col <= 6; col++) {
+      row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
+    }
+    applyBorders(row, 6);
+  });
+
+  if (reserveMovements.length === 0) {
+    wsReserva.getCell('A11').value = 'Sin movimientos en el período';
+    wsReserva.getCell('A11').font = { italic: true, color: { argb: 'FF999999' } };
+  }
+
+  wsReserva.getColumn(1).width = 12;
+  wsReserva.getColumn(2).width = 8;
+  wsReserva.getColumn(3).width = 10;
+  wsReserva.getColumn(4).width = 28;
+  wsReserva.getColumn(5).width = 18;
+  wsReserva.getColumn(6).width = 14;
 
   // Guardar
   await workbook.xlsx.writeFile(filePath);

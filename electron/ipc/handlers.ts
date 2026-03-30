@@ -577,7 +577,15 @@ ipcMain.handle('settings:set', (_event, key: string, value: string) => {
 });
 ipcMain.handle('reports:exportExcel', async (_, startDate: string, endDate: string) => {
   const sales = reportsRepository.getSalesForExport(startDate, endDate);
-  const filePath = await generateSalesExcel(sales, startDate, endDate);
+  const expensesReport = expensesReportRepository.getExpensesReport(startDate, endDate);
+  const filePath = await generateSalesExcel(
+    sales,
+    startDate,
+    endDate,
+    'NUEVA SIEMBRA',
+    expensesReport.expenses,
+    expensesReport.reserveMovements
+  );
   return filePath;
 });
 
