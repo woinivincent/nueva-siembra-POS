@@ -18,6 +18,7 @@ export interface TopProductItem {
   category: string;
   quantitySold: number;
   totalRevenue: number;
+  avgPrice: number;
 }
 
 export interface SalesReportSummary {
@@ -75,23 +76,23 @@ export class ReportsRepository {
       
       const dailyData = dailyStmt.all(startTimestamp, endTimestamp) as any[];
 
-      // Productos más vendidos
+      // Todos los productos vendidos en el período
       const topProductsStmt = sqlite.prepare(`
-        SELECT 
+        SELECT
           si.product_id,
           p.name as product_name,
           p.category,
           SUM(si.quantity) as quantity_sold,
-          SUM(si.subtotal) as total_revenue
+          SUM(si.subtotal) as total_revenue,
+          COALESCE(AVG(si.price), 0) as avg_price
         FROM sale_items si
         JOIN sales s ON si.sale_id = s.id
         JOIN products p ON si.product_id = p.id
         WHERE s.created_at >= ? AND s.created_at <= ? AND s.status = 'completed'
         GROUP BY si.product_id
         ORDER BY quantity_sold DESC
-        LIMIT 10
       `);
-      
+
       const topProducts = topProductsStmt.all(startTimestamp, endTimestamp) as any[];
 
       return {
@@ -110,6 +111,7 @@ export class ReportsRepository {
           category: p.category,
           quantitySold: p.quantity_sold,
           totalRevenue: p.total_revenue,
+          avgPrice: p.avg_price,
         })),
         dailyData: dailyData.map(d => ({
           date: d.date,

@@ -202,35 +202,62 @@ async function handleExport() {
               </div>
             </div>
 
-            {/* Productos más vendidos */}
-            <div className="bg-white rounded-xl shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Productos Más Vendidos</h3>
-              {report.topProducts.length === 0 ? (
-                <p className="text-gray-400 text-center py-4">Sin datos</p>
-              ) : (
-                <div className="space-y-3">
-                  {report.topProducts.slice(0, 5).map((product, index) => (
-                    <div key={product.productId} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                          index === 1 ? 'bg-gray-100 text-gray-700' :
-                          index === 2 ? 'bg-orange-100 text-orange-700' :
-                          'bg-gray-50 text-gray-500'
-                        }`}>
-                          {index + 1}
-                        </span>
-                        <div>
-                          <p className="font-medium text-gray-900">{product.productName}</p>
-                          <p className="text-xs text-gray-500">{product.quantitySold} vendidos</p>
-                        </div>
-                      </div>
-                      <span className="font-semibold text-green-600">{formatMoney(product.totalRevenue)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          </div>
+
+          {/* Detalle de productos vendidos */}
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Detalle de Productos Vendidos</h3>
+            {report.topProducts.length === 0 ? (
+              <p className="text-gray-400 text-center py-4">Sin datos</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">#</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Producto</th>
+                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Categoría</th>
+                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Cant. Vendida</th>
+                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Precio Prom.</th>
+                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {report.topProducts.map((product, index) => (
+                      <tr key={product.productId} className="hover:bg-gray-50">
+                        <td className="px-4 py-2">
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                            index === 1 ? 'bg-gray-200 text-gray-700' :
+                            index === 2 ? 'bg-orange-100 text-orange-700' :
+                            'bg-gray-50 text-gray-500'
+                          }`}>
+                            {index + 1}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 font-medium text-gray-900">{product.productName}</td>
+                        <td className="px-4 py-2 text-gray-500 text-sm">{product.category}</td>
+                        <td className="px-4 py-2 text-right text-black font-semibold">{product.quantitySold}</td>
+                        <td className="px-4 py-2 text-right text-gray-600">{formatMoney(product.avgPrice)}</td>
+                        <td className="px-4 py-2 text-right text-green-600 font-semibold">{formatMoney(product.totalRevenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                    <tr>
+                      <td colSpan={3} className="px-4 py-2 font-bold text-gray-700">TOTAL</td>
+                      <td className="px-4 py-2 text-right font-bold text-black">
+                        {report.topProducts.reduce((s, p) => s + p.quantitySold, 0)}
+                      </td>
+                      <td></td>
+                      <td className="px-4 py-2 text-right font-bold text-green-600">
+                        {formatMoney(report.topProducts.reduce((s, p) => s + p.totalRevenue, 0))}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Ventas por día */}

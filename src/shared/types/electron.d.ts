@@ -343,6 +343,7 @@ export interface TopProductItem {
   category: string;
   quantitySold: number;
   totalRevenue: number;
+  avgPrice: number;
 }
 
 export interface SalesReportSummary {

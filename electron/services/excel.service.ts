@@ -62,6 +62,15 @@ function applyBorders(row: ExcelJS.Row, colCount: number) {
   }
 }
 
+export interface ProductExportData {
+  productId: number;
+  productName: string;
+  category: string;
+  quantitySold: number;
+  avgPrice: number;
+  totalRevenue: number;
+}
+
 export interface ExpenseExportData {
   id: number;
   date: string;
@@ -88,7 +97,8 @@ export async function generateSalesExcel(
   endDate: string,
   businessName: string = 'NUEVA SIEMBRA',
   expenses: ExpenseExportData[] = [],
-  reserveMovements: ReserveExportData[] = []
+  reserveMovements: ReserveExportData[] = [],
+  products: ProductExportData[] = []
 ): Promise<string | null> {
   // Mostrar diálogo para elegir dónde guardar
   const { filePath, canceled } = await dialog.showSaveDialog({
@@ -336,7 +346,70 @@ export async function generateSalesExcel(
   wsFechas.getColumn(3).width = 18;
   wsFechas.getColumn(4).width = 18;
 
-  // ==================== HOJA 5: EGRESOS ====================
+  // ==================== HOJA 5: PRODUCTOS ====================
+  const wsProductos = workbook.addWorksheet('Productos');
+
+  wsProductos.mergeCells('A1:F1');
+  const titleProductos = wsProductos.getCell('A1');
+  titleProductos.value = 'DETALLE DE PRODUCTOS VENDIDOS';
+  applyTitleStyle(titleProductos, COLORS.greenLight);
+  wsProductos.getRow(1).height = 30;
+
+  wsProductos.getCell('A3').value = 'Período:';
+  wsProductos.getCell('A3').font = { bold: true };
+  wsProductos.getCell('B3').value = `${startDate} a ${endDate}`;
+
+  const headerProductos = wsProductos.getRow(5);
+  ['#', 'Producto', 'Categoría', 'Cant. Vendida', 'Precio Prom.', 'Total'].forEach((h, i) => {
+    const cell = headerProductos.getCell(i + 1);
+    cell.value = h;
+    applyHeaderStyle(cell);
+  });
+  applyBorders(headerProductos, 6);
+
+  products.forEach((p, idx) => {
+    const row = wsProductos.getRow(idx + 6);
+    row.getCell(1).value = idx + 1;
+    row.getCell(2).value = p.productName;
+    row.getCell(3).value = p.category;
+    row.getCell(4).value = p.quantitySold;
+    row.getCell(5).value = p.avgPrice;
+    row.getCell(5).numFmt = '"$"#,##0.00';
+    row.getCell(6).value = p.totalRevenue;
+    row.getCell(6).numFmt = '"$"#,##0.00';
+
+    if (idx % 2 === 0) {
+      for (let col = 1; col <= 6; col++) {
+        row.getCell(col).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.grayLight } };
+      }
+    }
+    applyBorders(row, 6);
+  });
+
+  if (products.length === 0) {
+    wsProductos.getCell('A6').value = 'Sin productos vendidos en el período';
+    wsProductos.getCell('A6').font = { italic: true, color: { argb: 'FF999999' } };
+  } else {
+    const totProdRow = wsProductos.getRow(products.length + 6);
+    totProdRow.getCell(1).value = 'TOTAL';
+    totProdRow.getCell(4).value = products.reduce((s, p) => s + p.quantitySold, 0);
+    totProdRow.getCell(6).value = products.reduce((s, p) => s + p.totalRevenue, 0);
+    totProdRow.getCell(6).numFmt = '"$"#,##0.00';
+    totProdRow.eachCell(cell => {
+      cell.font = { bold: true };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLORS.yellow } };
+    });
+    applyBorders(totProdRow, 6);
+  }
+
+  wsProductos.getColumn(1).width = 6;
+  wsProductos.getColumn(2).width = 30;
+  wsProductos.getColumn(3).width = 18;
+  wsProductos.getColumn(4).width = 15;
+  wsProductos.getColumn(5).width = 15;
+  wsProductos.getColumn(6).width = 15;
+
+  // ==================== HOJA 6: EGRESOS ====================
   const wsEgresos = workbook.addWorksheet('Egresos');
 
   wsEgresos.mergeCells('A1:F1');
