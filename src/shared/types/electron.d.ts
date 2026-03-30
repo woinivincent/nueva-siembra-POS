@@ -170,6 +170,7 @@ export interface ElectronAPI {
       amount: number;
       concept: string;
       description?: string;
+      paymentMethod?: "cash" | "transfer";
     }) => Promise<CashMovement>;
     deleteMovement: (id: number) => Promise<boolean>;
     getSalesByPaymentMethod: (
@@ -264,8 +265,9 @@ export interface ElectronAPI {
 
   reports: {
     getSalesReport: (startDate: string, endDate: string) => Promise<SalesReportSummary>;
-  getSalesForExport: (startDate: string, endDate: string) => Promise<any[]>;
-  exportExcel: (startDate: string, endDate: string) => Promise<string>;
+    getSalesForExport: (startDate: string, endDate: string) => Promise<any[]>;
+    exportExcel: (startDate: string, endDate: string) => Promise<string>;
+    getExpensesReport: (startDate: string, endDate: string) => Promise<any>;
   };
   dashboard: {
   getStats: () => Promise<DashboardStats>;
