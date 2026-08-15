@@ -38,15 +38,9 @@ export function QuickAccessButtons() {
             className="h-16 flex flex-col items-center justify-center"
             disabled={!product}
             onClick={() => {
-              if (product) {
-                addItem({
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  unit: product.unit,
-                   priceCard:product.priceCard
-                });
-              }
+              // Los accesos rápidos cargan el producto suelto; para armar un
+              // pack se toca el producto en la grilla y se elige el tamaño.
+              if (product) addItem(product, 'unit');
             }}
           >
             <span className="text-xs font-semibold">{key}</span>

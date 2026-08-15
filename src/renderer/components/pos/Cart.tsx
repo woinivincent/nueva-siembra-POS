@@ -8,8 +8,6 @@ import {
   Percent,
   DollarSign,
   X,
-  Banknote,
-  CreditCard,
 } from "lucide-react";
 
 import { Button } from "@/renderer/components/ui/button";
@@ -19,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/renderer/components/ui/card";
-import { useCartStore, type DiscountType,  } from "@/renderer/stores/cart.stores";
+import { useCartStore, groupFill, effectivePrice, lineSubtotal, type CartItem, type DiscountType } from '@/renderer/stores/cart.stores';
 import { PaymentModal } from "./PaymentModal";
 
 interface CartProps {
@@ -34,14 +32,16 @@ export function Cart({ onCheckout }: CartProps) {
     total,
     discountType,
     discountValue,
-    priceList,
     updateQuantity,
     removeItem,
     clearCart,
     setDiscount,
     clearDiscount,
-    setPriceList,
   } = useCartStore();
+
+  // Cuánto lleva cargado cada pack: define si ya se cobra a precio de pack
+  // o si todavía va a precio unidad por estar incompleto.
+  const fill = groupFill(items);
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
@@ -59,9 +59,9 @@ export function Cart({ onCheckout }: CartProps) {
 
   const stepForUnit = (unit: "ud" | "kg") => (unit === "kg" ? 0.1 : 1);
 
-  const safeUpdateQty = (productId: number, nextQty: number) => {
+  const safeUpdateQty = (lineId: string, nextQty: number) => {
     const qty = Math.max(0, Number(nextQty.toFixed(4)));
-    updateQuantity(productId, qty);
+    updateQuantity(lineId, qty);
   };
 
   const handleApplyDiscount = () => {
@@ -93,8 +93,97 @@ export function Cart({ onCheckout }: CartProps) {
     setPaymentModalOpen(true);
   };
 
-  const getCurrentPrice = (item: typeof items[0]) => {
-    return priceList === 'cash' ? item.price : item.priceCard;
+  // Las líneas se muestran agrupadas por pack, respetando el orden de carga.
+  type Block =
+    | { kind: "pack"; groupId: string; size: number; filled: number; complete: boolean; items: CartItem[] }
+    | { kind: "single"; item: CartItem };
+
+  const blocks: Block[] = [];
+  const packIndex = new Map<string, number>();
+
+  for (const item of items) {
+    if (!item.packGroupId || !item.packSize) {
+      blocks.push({ kind: "single", item });
+      continue;
+    }
+
+    const existing = packIndex.get(item.packGroupId);
+    if (existing !== undefined) {
+      (blocks[existing] as Extract<Block, { kind: "pack" }>).items.push(item);
+      continue;
+    }
+
+    const filled = fill.get(item.packGroupId) ?? 0;
+    packIndex.set(item.packGroupId, blocks.length);
+    blocks.push({
+      kind: "pack",
+      groupId: item.packGroupId,
+      size: item.packSize,
+      filled,
+      complete: filled >= item.packSize,
+      items: [item],
+    });
+  }
+
+  const renderLine = (item: CartItem) => {
+    const step = stepForUnit(item.unit);
+    const isKg = item.unit === "kg";
+    const price = effectivePrice(item, fill);
+
+    return (
+      <div key={item.id} className="bg-secondary rounded-lg p-3 space-y-2">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="font-medium text-sm">{item.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {formatMoney(price)} {isKg ? "/ kg" : "c/u"}
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive"
+            onClick={() => removeItem(item.id)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => safeUpdateQty(item.id, item.quantity - step)}
+            >
+              <Minus className="w-3 h-3" />
+            </Button>
+
+            <span className="text-sm font-semibold min-w-[3rem] text-center">
+              {isKg ? item.quantity.toFixed(2) : item.quantity}
+            </span>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => safeUpdateQty(item.id, item.quantity + step)}
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          </div>
+
+          <p className="font-bold text-primary">
+            {formatMoney(lineSubtotal(item, fill))}
+          </p>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -118,33 +207,6 @@ export function Cart({ onCheckout }: CartProps) {
             )}
           </div>
 
-          {/* Selector de lista de precios */}
-          <div className="flex gap-2 mt-3">
-            <button
-              type="button"
-              onClick={() => setPriceList('cash')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                priceList === 'cash'
-                  ? 'bg-green-100 text-green-700 border-2 border-green-500'
-                  : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
-              }`}
-            >
-              <Banknote className="w-4 h-4" />
-              Efectivo
-            </button>
-            <button
-              type="button"
-              onClick={() => setPriceList('card')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
-                priceList === 'card'
-                  ? 'bg-blue-100 text-blue-700 border-2 border-blue-500'
-                  : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
-              }`}
-            >
-              <CreditCard className="w-4 h-4" />
-              Tarjeta
-            </button>
-          </div>
         </CardHeader>
 
         <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -158,78 +220,36 @@ export function Cart({ onCheckout }: CartProps) {
             </div>
           ) : (
             <>
-              {items.map((item) => {
-                const step = stepForUnit(item.unit);
-                const isKg = item.unit === "kg";
-                const currentPrice = getCurrentPrice(item);
-
-                return (
+              {blocks.map((block) =>
+                block.kind === "pack" ? (
                   <div
-                    key={item.productId}
-                    className="bg-secondary rounded-lg p-3 space-y-2"
+                    key={block.groupId}
+                    className={`rounded-lg border-2 p-2 space-y-2 ${
+                      block.complete
+                        ? "border-primary/40 bg-primary/5"
+                        : "border-amber-400/60 bg-amber-50/50"
+                    }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{item.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatMoney(currentPrice)} {isKg ? "/ kg" : "c/u"}
-                          {item.price !== item.priceCard && (
-                            <span className={`ml-1 ${priceList === 'cash' ? 'text-green-600' : 'text-blue-600'}`}>
-                              ({priceList === 'cash' ? '💵' : '💳'})
-                            </span>
-                          )}
-                        </p>
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => removeItem(item.productId)}
+                    <div className="flex items-center justify-between px-1">
+                      <span className="text-xs font-semibold uppercase tracking-wide">
+                        Pack x{block.size}
+                      </span>
+                      <span
+                        className={`text-xs font-medium ${
+                          block.complete ? "text-primary" : "text-amber-600"
+                        }`}
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        {block.complete
+                          ? "completo"
+                          : `faltan ${block.size - block.filled} · va a precio unidad`}
+                      </span>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            safeUpdateQty(item.productId, item.quantity - step)
-                          }
-                        >
-                          <Minus className="w-3 h-3" />
-                        </Button>
-
-                        <span className="text-sm font-semibold min-w-[3rem] text-center">
-                          {isKg ? item.quantity.toFixed(2) : item.quantity}
-                        </span>
-
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            safeUpdateQty(item.productId, item.quantity + step)
-                          }
-                        >
-                          <Plus className="w-3 h-3" />
-                        </Button>
-                      </div>
-
-                      <p className="font-bold text-primary">
-                        {formatMoney(item.subtotal)}
-                      </p>
-                    </div>
+                    {block.items.map(renderLine)}
                   </div>
-                );
-              })}
+                ) : (
+                  renderLine(block.item)
+                ),
+              )}
             </>
           )}
         </CardContent>
@@ -239,9 +259,7 @@ export function Cart({ onCheckout }: CartProps) {
             {/* Resumen */}
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Subtotal ({priceList === 'cash' ? '💵 Efectivo' : '💳 Tarjeta'}):
-                </span>
+                <span className="text-muted-foreground">Subtotal:</span>
                 <span className="font-medium">{formatMoney(subtotal)}</span>
               </div>
 

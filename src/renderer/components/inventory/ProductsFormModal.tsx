@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import type { Product } from '@/shared/types/electron';
+import { packSizesFor, packPriceField, packLabel, ALL_PACK_SIZES } from '@/shared/packs';
 
 interface Props {
   isOpen: boolean;
@@ -24,7 +25,10 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
     category: '',
     newCategory: '',
     price: '',
-    priceCard: '',
+    pricePack3: '',
+    pricePack4: '',
+    pricePack5: '',
+    pricePack10: '',
     cost: '',
     stock: '',
     stockMin: '',
@@ -37,14 +41,17 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [useNewCategory, setUseNewCategory] = useState(false);
-  const [autoCalcCard, setAutoCalcCard] = useState(true);
 
   const isEditing = !!product;
+
+  // Tamaños de pack que ofrece la categoría elegida (viandas y tartas x3/x5/x10,
+  // hamburguesas x4). Se recalcula al cambiar de categoría.
+  const currentCategory = useNewCategory ? formData.newCategory : formData.category;
+  const packSizes = packSizesFor(currentCategory);
 
   useEffect(() => {
     if (isOpen) {
       if (product) {
-        const hasDifferentCardPrice = product.priceCard !== product.price;
         setFormData({
           name: product.name,
           description: product.description || '',
@@ -52,7 +59,10 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
           category: product.category,
           newCategory: '',
           price: product.price.toString(),
-          priceCard: product.priceCard.toString(),
+          pricePack3: product.pricePack3?.toString() ?? '',
+          pricePack4: product.pricePack4?.toString() ?? '',
+          pricePack5: product.pricePack5?.toString() ?? '',
+          pricePack10: product.pricePack10?.toString() ?? '',
           cost: product.cost?.toString() || '',
           stock: product.stock.toString(),
           stockMin: product.stockMin?.toString() || '',
@@ -61,7 +71,6 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
           favoriteKey: product.favoriteKey || '',
           image: product.image || null,
         });
-        setAutoCalcCard(!hasDifferentCardPrice);
         setUseNewCategory(false);
         
         // Cargar preview de imagen existente
@@ -78,7 +87,10 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
           category: categories[0] || '',
           newCategory: '',
           price: '',
-          priceCard: '',
+          pricePack3: '',
+          pricePack4: '',
+          pricePack5: '',
+          pricePack10: '',
           cost: '',
           stock: '0',
           stockMin: '0',
@@ -87,7 +99,6 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
           favoriteKey: '',
           image: null,
         });
-        setAutoCalcCard(true);
         setUseNewCategory(categories.length === 0);
         setImagePreview(null);
       }
@@ -104,17 +115,6 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
       setImagePreview(null);
     }
   };
-
-  // Calcular precio tarjeta automáticamente (10% más)
-  useEffect(() => {
-    if (autoCalcCard && formData.price) {
-      const basePrice = parseFloat(formData.price);
-      if (!isNaN(basePrice)) {
-        const cardPrice = (basePrice * 1.10).toFixed(2);
-        setFormData(prev => ({ ...prev, priceCard: cardPrice }));
-      }
-    }
-  }, [formData.price, autoCalcCard]);
 
   if (!isOpen) return null;
 
@@ -168,14 +168,28 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
 
     const price = parseFloat(formData.price);
     if (isNaN(price) || price <= 0) {
-      setError('El precio efectivo debe ser mayor a 0');
+      setError('El precio por unidad debe ser mayor a 0');
       return;
     }
 
-    const priceCard = parseFloat(formData.priceCard);
-    if (isNaN(priceCard) || priceCard <= 0) {
-      setError('El precio tarjeta debe ser mayor a 0');
-      return;
+    // Los precios de pack son opcionales: vacío significa que el producto no se
+    // vende en ese pack. Pero si se carga un valor, tiene que ser válido.
+    const packPrices: Record<string, number | null> = {};
+    for (const size of ALL_PACK_SIZES) {
+      const field = packPriceField(size);
+      const raw = packSizes.includes(size) ? formData[field].trim() : '';
+
+      if (raw === '') {
+        packPrices[field] = null;
+        continue;
+      }
+
+      const value = parseFloat(raw);
+      if (isNaN(value) || value <= 0) {
+        setError(`El precio del ${packLabel(size).toLowerCase()} debe ser mayor a 0`);
+        return;
+      }
+      packPrices[field] = value;
     }
 
     setIsLoading(true);
@@ -192,7 +206,7 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
         barcode: formData.barcode.trim() || null,
         category,
         price,
-        priceCard,
+        ...packPrices,
         cost: formData.cost ? parseFloat(formData.cost) : 0,
         stock: parseFloat(formData.stock) || 0,
         stockMin: parseFloat(formData.stockMin) || 0,
@@ -216,10 +230,6 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
       setIsLoading(false);
     }
   };
-
-  const priceDiff = formData.price && formData.priceCard
-    ? (((parseFloat(formData.priceCard) - parseFloat(formData.price)) / parseFloat(formData.price)) * 100).toFixed(1)
-    : '0';
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -380,59 +390,63 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
 
           {/* PRECIOS */}
           <div className="bg-blue-50 rounded-lg p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-blue-900">💰 Lista de Precios</h3>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={autoCalcCard}
-                  onChange={(e) => setAutoCalcCard(e.target.checked)}
-                  className="rounded text-blue-600"
-                />
-                <span className="text-blue-700">Auto +10% tarjeta</span>
+            <h3 className="font-semibold text-blue-900">💰 Precios</h3>
+
+            <div>
+              <label className="block text-sm font-medium text-green-700 mb-1">
+                Precio por unidad *
               </label>
+              <div className="relative max-w-xs">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.price}
+                  onChange={(e) => handleChange('price', e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-green-700 mb-1">
-                  💵 Precio Efectivo *
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => handleChange('price', e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
-                    placeholder="0.00"
-                  />
-                </div>
+            <div className="pt-2 border-t border-blue-200">
+              <div className="flex items-baseline justify-between mb-1">
+                <h4 className="text-sm font-medium text-blue-900">Precios por pack</h4>
+                <span className="text-xs text-blue-600">
+                  Precio de cada unidad dentro del pack
+                </span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-blue-700 mb-1">
-                  💳 Precio Tarjeta/Transf. *
-                  {priceDiff !== '0' && parseFloat(priceDiff) > 0 && (
-                    <span className="ml-2 text-xs text-blue-500">(+{priceDiff}%)</span>
-                  )}
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.priceCard}
-                    onChange={(e) => {
-                      setAutoCalcCard(false);
-                      handleChange('priceCard', e.target.value);
-                    }}
-                    className="w-full pl-8 pr-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-                    placeholder="0.00"
-                  />
-                </div>
+              <p className="text-xs text-gray-600 mb-3">
+                Dejá vacío el pack que este producto no venda. Si los dejás todos
+                vacíos, el producto se vende únicamente por unidad.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {packSizes.map((size) => (
+                  <div key={size}>
+                    <label className="block text-sm font-medium text-blue-700 mb-1">
+                      {packLabel(size)}
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData[packPriceField(size)]}
+                        onChange={(e) => handleChange(packPriceField(size), e.target.value)}
+                        className="w-full pl-8 pr-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                        placeholder="—"
+                      />
+                    </div>
+                    {formData[packPriceField(size)] && formData.price && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Pack completo: ${(parseFloat(formData[packPriceField(size)]) * size).toFixed(2)}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

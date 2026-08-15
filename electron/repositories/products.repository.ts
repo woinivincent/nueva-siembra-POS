@@ -8,7 +8,10 @@ export interface Product {
   barcode: string | null;
   category: string;
   price: number;
-  price_card: number | null;
+  price_pack_3: number | null;
+  price_pack_4: number | null;
+  price_pack_5: number | null;
+  price_pack_10: number | null;
   cost: number | null;
   stock: number;
   stock_min: number | null;
@@ -28,7 +31,10 @@ export interface ProductDTO {
   barcode: string | null;
   category: string;
   price: number;
-  priceCard: number;
+  pricePack3: number | null;
+  pricePack4: number | null;
+  pricePack5: number | null;
+  pricePack10: number | null;
   cost: number | null;
   stock: number;
   stockMin: number | null;
@@ -49,7 +55,10 @@ function toDTO(row: Product): ProductDTO {
     barcode: row.barcode,
     category: row.category,
     price: row.price,
-    priceCard: row.price_card ?? row.price, // Si no tiene precio tarjeta, usa el precio normal
+    pricePack3: row.price_pack_3,
+    pricePack4: row.price_pack_4,
+    pricePack5: row.price_pack_5,
+    pricePack10: row.price_pack_10,
     cost: row.cost,
     stock: row.stock,
     stockMin: row.stock_min,
@@ -160,15 +169,18 @@ export class ProductsRepository {
   create(data: Partial<ProductDTO>): ProductDTO | null {
     try {
       const stmt = sqlite.prepare(`
-        INSERT INTO products (name, category, price, price_card, cost, stock, stock_min, unit, barcode, description, image, is_favorite, favorite_key)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO products (name, category, price, price_pack_3, price_pack_4, price_pack_5, price_pack_10, cost, stock, stock_min, unit, barcode, description, image, is_favorite, favorite_key)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
-      
+
       const result = stmt.run(
         data.name,
         data.category,
         data.price,
-        data.priceCard ?? data.price, // Si no especifica precio tarjeta, usa el precio normal
+        data.pricePack3 ?? null,
+        data.pricePack4 ?? null,
+        data.pricePack5 ?? null,
+        data.pricePack10 ?? null,
         data.cost || 0,
         data.stock || 0,
         data.stockMin || 0,
@@ -195,7 +207,10 @@ export class ProductsRepository {
       if (data.name !== undefined) { fields.push('name = ?'); values.push(data.name); }
       if (data.category !== undefined) { fields.push('category = ?'); values.push(data.category); }
       if (data.price !== undefined) { fields.push('price = ?'); values.push(data.price); }
-      if (data.priceCard !== undefined) { fields.push('price_card = ?'); values.push(data.priceCard); }
+      if (data.pricePack3 !== undefined) { fields.push('price_pack_3 = ?'); values.push(data.pricePack3); }
+      if (data.pricePack4 !== undefined) { fields.push('price_pack_4 = ?'); values.push(data.pricePack4); }
+      if (data.pricePack5 !== undefined) { fields.push('price_pack_5 = ?'); values.push(data.pricePack5); }
+      if (data.pricePack10 !== undefined) { fields.push('price_pack_10 = ?'); values.push(data.pricePack10); }
       if (data.cost !== undefined) { fields.push('cost = ?'); values.push(data.cost); }
       if (data.stock !== undefined) { fields.push('stock = ?'); values.push(data.stock); }
       if (data.stockMin !== undefined) { fields.push('stock_min = ?'); values.push(data.stockMin); }

@@ -35,18 +35,25 @@ function runMigrations() {
       console.log("✅ Migración completada");
     }
 
-    // Verificar si la columna price_card ya existe
-    const tableInfo = sqlite
+    // Migración: precios por pack. Reemplazan al precio diferenciado por
+    // medio de pago (price_card), que ya no se usa porque el precio no
+    // depende de si se paga en efectivo o por transferencia.
+    const productsInfo = sqlite
       .prepare("PRAGMA table_info(products)")
       .all() as any[];
-    const hasColumn = tableInfo.some((col: any) => col.name === "price_card");
+    const productColumns = new Set(productsInfo.map((col: any) => col.name));
 
-    if (!hasColumn) {
-      console.log("📦 Ejecutando migración: agregar price_card...");
-      sqlite.exec(`ALTER TABLE products ADD COLUMN price_card REAL`);
-      sqlite.exec(
-        `UPDATE products SET price_card = price WHERE price_card IS NULL`,
-      );
+    for (const size of [3, 4, 5, 10]) {
+      const column = `price_pack_${size}`;
+      if (!productColumns.has(column)) {
+        console.log(`📦 Ejecutando migración: agregar ${column}...`);
+        sqlite.exec(`ALTER TABLE products ADD COLUMN ${column} REAL`);
+      }
+    }
+
+    if (productColumns.has("price_card")) {
+      console.log("📦 Ejecutando migración: eliminar price_card...");
+      sqlite.exec(`ALTER TABLE products DROP COLUMN price_card`);
       console.log("✅ Migración completada");
     }
 
@@ -120,7 +127,10 @@ function createTables() {
       barcode TEXT UNIQUE,
       category TEXT NOT NULL,
       price REAL NOT NULL,
-      price_card REAL,
+      price_pack_3 REAL,
+      price_pack_4 REAL,
+      price_pack_5 REAL,
+      price_pack_10 REAL,
       cost REAL DEFAULT 0,
       stock REAL DEFAULT 0 NOT NULL,
       stock_min REAL DEFAULT 0,
@@ -283,170 +293,35 @@ function seedInitialData() {
 
     console.log("🌱 Insertando productos de ejemplo...");
 
-    // Ahora con price y price_card
     const insertProduct = sqlite.prepare(`
-      INSERT INTO products (name, category, price, price_card, cost, stock, stock_min, unit, barcode, is_favorite, favorite_key)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (name, category, price, price_pack_3, price_pack_4, price_pack_5, price_pack_10, cost, stock, stock_min, unit, barcode, is_favorite, favorite_key)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    // [nombre, categoria, precioEfectivo, precioTarjeta, costo, stock, stockMin, unidad, barcode, favorito, tecla]
+    // [nombre, categoria, precioUnidad, packX3, packX4, packX5, packX10, costo, stock, stockMin, unidad, barcode, favorito, tecla]
+    //
+    // Viandas y tartas se venden por unidad y en packs de 3, 5 y 10.
+    // Las hamburguesas tienen su propia lógica: únicamente pack x4.
+    // Un precio de pack en null significa que ese producto no se vende en
+    // ese pack; si están los cuatro en null, el producto es sólo por unidad.
     const products = [
-      [
-        "Ensalada César",
-        "Ensaladas",
-        8.5,
-        9.35,
-        4.0,
-        15,
-        5,
-        "ud",
-        "7501234567890",
-        1,
-        "F1",
-      ],
-      [
-        "Bowl de Quinoa",
-        "Bowls",
-        9.0,
-        9.9,
-        4.5,
-        12,
-        5,
-        "ud",
-        "7501234567891",
-        1,
-        "F2",
-      ],
-      [
-        "Smoothie Verde",
-        "Bebidas",
-        5.5,
-        6.05,
-        2.5,
-        20,
-        5,
-        "ud",
-        "7501234567892",
-        1,
-        "F3",
-      ],
-      [
-        "Wrap de Pollo",
-        "Wraps",
-        7.5,
-        8.25,
-        3.5,
-        10,
-        5,
-        "ud",
-        "7501234567893",
-        1,
-        "F4",
-      ],
-      [
-        "Jugo Detox",
-        "Bebidas",
-        6.0,
-        6.6,
-        2.8,
-        18,
-        5,
-        "ud",
-        "7501234567894",
-        1,
-        "F5",
-      ],
-      [
-        "Bowl Acai",
-        "Bowls",
-        10.0,
-        11.0,
-        5.0,
-        8,
-        3,
-        "ud",
-        "7501234567895",
-        1,
-        "F6",
-      ],
-      [
-        "Ensalada Mediterránea",
-        "Ensaladas",
-        8.0,
-        8.8,
-        4.0,
-        10,
-        5,
-        "ud",
-        "7501234567896",
-        0,
-        null,
-      ],
-      [
-        "Agua Mineral",
-        "Bebidas",
-        2.5,
-        2.75,
-        1.0,
-        50,
-        10,
-        "ud",
-        "7501234567897",
-        0,
-        null,
-      ],
-      [
-        "Ensalada Griega",
-        "Ensaladas",
-        7.5,
-        8.25,
-        3.5,
-        12,
-        5,
-        "ud",
-        "7501234567898",
-        0,
-        null,
-      ],
-      [
-        "Bowl Proteico",
-        "Bowls",
-        11.0,
-        12.1,
-        5.5,
-        10,
-        3,
-        "ud",
-        "7501234567899",
-        0,
-        null,
-      ],
-      [
-        "Té Verde",
-        "Bebidas",
-        3.0,
-        3.3,
-        1.2,
-        30,
-        10,
-        "ud",
-        "7501234567900",
-        0,
-        null,
-      ],
-      [
-        "Wrap Vegetariano",
-        "Wraps",
-        6.5,
-        7.15,
-        3.0,
-        15,
-        5,
-        "ud",
-        "7501234567901",
-        0,
-        null,
-      ],
+      // Viandas
+      ["Vianda de milanesa", "Viandas", 3000, 2800, null, 2700, 2500, 1500, 20, 5, "ud", null, 1, "F1"],
+      ["Vianda de pollo", "Viandas", 3000, 2800, null, 2700, 2500, 1500, 20, 5, "ud", null, 1, "F2"],
+      ["Vianda de carne", "Viandas", 3000, 2800, null, 2700, 2500, 1600, 15, 5, "ud", null, 1, "F3"],
+      ["Vianda vegetariana", "Viandas", 3000, 2800, null, 2700, 2500, 1400, 15, 5, "ud", null, 0, null],
+
+      // Tartas
+      ["Tarta de verdura", "Tartas", 3000, 2800, null, 2700, 2500, 1500, 12, 4, "ud", null, 1, "F4"],
+      ["Tarta de jamón y queso", "Tartas", 3000, 2800, null, 2700, 2500, 1600, 12, 4, "ud", null, 0, null],
+      // Precio propio, pero participa de los packs con su valor diferenciado
+      ["Tarta de champignones", "Tartas", 3500, 3300, null, 3200, 3000, 1900, 8, 3, "ud", null, 0, null],
+      // Se vende únicamente por unidad: sin precios de pack cargados
+      ["Tarta de salmón", "Tartas", 4500, null, null, null, null, 2600, 6, 2, "ud", null, 0, null],
+
+      // Hamburguesas: sólo pack x4
+      ["Hamburguesa clásica", "Hamburguesas", 6000, null, 5600, null, null, 3000, 20, 5, "ud", null, 1, "F5"],
+      ["Hamburguesa doble", "Hamburguesas", 6000, null, 5600, null, null, 3300, 15, 5, "ud", null, 0, null],
     ];
 
     const insertMany = sqlite.transaction((items: any[][]) => {
@@ -464,8 +339,7 @@ function seedInitialData() {
     insertSetting.run("tax_rate", "0");
     insertSetting.run("currency", "ARS");
     insertSetting.run("theme", "light");
-    insertSetting.run("business_name", "Healthy Food POS");
-    insertSetting.run("card_surcharge", "10"); // Recargo por defecto del 10%
+    insertSetting.run("business_name", "Nueva Siembra");
 
     const count = sqlite
       .prepare("SELECT COUNT(*) as count FROM products")

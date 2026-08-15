@@ -9,6 +9,10 @@ interface Product {
   barcode: string | null;
   category: string;
   price: number;
+  pricePack3: number | null;
+  pricePack4: number | null;
+  pricePack5: number | null;
+  pricePack10: number | null;
   cost: number | null;
   stock: number;
   stockMin: number | null;

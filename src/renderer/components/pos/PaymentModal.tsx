@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/renderer/components/ui/dialog";
-import { useCartStore } from "@/renderer/stores/cart.stores";
+import { useCartStore, groupFill, effectivePrice, lineSubtotal } from '@/renderer/stores/cart.stores';
 import { ticketService, type PaymentMethod } from "@/renderer/services/ticket.service";
 import type { Customer } from "@/shared/types/electron";
 import { CustomerFormModal } from "@/renderer/components/customers/CustomersFormModal";
@@ -44,7 +44,10 @@ const paymentMethods: {
 type TabType = "payment" | "customer";
 
 export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
-  const { items, subtotal, discount, total, priceList, clearCart } = useCartStore();
+  const { items, subtotal, discount, total, clearCart } = useCartStore();
+
+  // El precio de cada línea depende de si su pack quedó completo.
+  const fill = groupFill(items);
 
   // Tab activo
   const [activeTab, setActiveTab] = useState<TabType>("payment");
@@ -57,9 +60,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const [isCreateCustomerOpen, setIsCreateCustomerOpen] = useState(false);
 
   // Pago simple
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(
-    priceList === "cash" ? "cash" : "debit"
-  );
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("cash");
   const [cashReceived, setCashReceived] = useState("");
 
   // Pago mixto
@@ -84,7 +85,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
       setIsCustomerLoading(false);
       setIsCreateCustomerOpen(false);
 
-      setSelectedMethod(priceList === "cash" ? "cash" : "debit");
+      setSelectedMethod("cash");
       setCashReceived("");
       setIsMixedPayment(false);
       setMixedMethod1("cash");
@@ -95,7 +96,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
       setCompletedSaleId(null);
       setError(null);
     }
-  }, [open, priceList]);
+  }, [open]);
 
   // Buscar clientes (debounce)
   useEffect(() => {
@@ -193,9 +194,9 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          price: priceList === "cash" ? item.price : item.priceCard,
+          price: effectivePrice(item, fill),
           discount: 0,
-          subtotal: item.subtotal,
+          subtotal: lineSubtotal(item, fill),
         })),
       };
 
@@ -220,8 +221,8 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
         items: items.map((item) => ({
           name: item.name,
           quantity: item.quantity,
-          price: priceList === "cash" ? item.price : item.priceCard,
-          subtotal: item.subtotal,
+          price: effectivePrice(item, fill),
+          subtotal: lineSubtotal(item, fill),
         })),
         subtotal,
         discount,
@@ -256,8 +257,8 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
         items: items.map((item) => ({
           name: item.name,
           quantity: item.quantity,
-          price: priceList === "cash" ? item.price : item.priceCard,
-          subtotal: item.subtotal,
+          price: effectivePrice(item, fill),
+          subtotal: lineSubtotal(item, fill),
         })),
         subtotal,
         discount,

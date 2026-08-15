@@ -9,6 +9,11 @@ export const products = sqliteTable('products', {
   barcode: text('barcode').unique(),
   category: text('category').notNull(),
   price: real('price').notNull(),
+  // Precios de pack, cargados a mano. NULL = el producto no se vende en ese pack.
+  pricePack3: real('price_pack_3'),
+  pricePack4: real('price_pack_4'),
+  pricePack5: real('price_pack_5'),
+  pricePack10: real('price_pack_10'),
   cost: real('cost').default(0),
   stock: real('stock').default(0).notNull(),
   stockMin: real('stock_min').default(0),

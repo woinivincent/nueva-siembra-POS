@@ -2,7 +2,9 @@
 import { useEffect, useState } from 'react';
 import { ProductCard } from './ProductCard';
 import type { Product } from '@/shared/types/electron';
-import { useCartStore } from '@/renderer/stores/cart.stores';
+import { useCartStore, type AddMode } from '@/renderer/stores/cart.stores';
+import { availablePackSizes } from '@/shared/packs';
+import { PackPicker } from './PackPicker';
 
 interface ProductGridProps {
   searchTerm: string;
@@ -12,7 +14,24 @@ interface ProductGridProps {
 export function ProductGrid({ searchTerm, selectedCategory }: ProductGridProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  // Producto cuyo selector de pack está abierto
+  const [pickerFor, setPickerFor] = useState<Product | null>(null);
   const addItem = useCartStore(state => state.addItem);
+
+  function handleProductClick(product: Product) {
+    // Sin precios de pack cargados, el producto sólo se vende por unidad:
+    // se carga directo, sin abrir el selector.
+    if (availablePackSizes(product).length === 0) {
+      addItem(product, 'unit');
+      return;
+    }
+    setPickerFor(product);
+  }
+
+  function handlePick(product: Product, mode: AddMode) {
+    addItem(product, mode);
+    setPickerFor(null);
+  }
 
   useEffect(() => {
     loadProducts();
@@ -50,17 +69,19 @@ export function ProductGrid({ searchTerm, selectedCategory }: ProductGridProps) 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {filteredProducts.map(product => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onAddToCart={() => addItem({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            unit: product.unit,
-            priceCard:product.priceCard
-          })}
-        />
+        <div key={product.id} className="relative">
+          <ProductCard
+            product={product}
+            onAddToCart={() => handleProductClick(product)}
+          />
+          {pickerFor?.id === product.id && (
+            <PackPicker
+              product={product}
+              onPick={(mode) => handlePick(product, mode)}
+              onClose={() => setPickerFor(null)}
+            />
+          )}
+        </div>
       ))}
       
       {filteredProducts.length === 0 && (
