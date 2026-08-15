@@ -56,7 +56,6 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
     const labels: Record<string, { label: string; color: string }> = {
       cash: { label: 'Efectivo', color: 'bg-green-100 text-green-700' },
       transfer: { label: 'Transferencia', color: 'bg-orange-100 text-orange-700' },
-      mixed: { label: 'Pago dividido', color: 'bg-gray-100 text-gray-700' },
     };
     return labels[method] || { label: method, color: 'bg-gray-100 text-gray-700' };
   };
@@ -102,12 +101,12 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
                     {getPaymentMethodLabel(sale.paymentMethod).label}
                   </span>
                 </div>
-                {sale.customerId && (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm">Cliente asignado</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 text-gray-600">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">
+                    {sale.customerName || 'Sin cliente'}
+                  </span>
+                </div>
               </div>
 
               {/* Productos */}
@@ -160,7 +159,7 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{formatMoney(sale.subtotal)}</span>
+                  <span className="font-medium text-gray-900">{formatMoney(sale.subtotal)}</span>
                 </div>
                 {sale.discount > 0 && (
                   <div className="flex justify-between text-sm">
@@ -170,7 +169,7 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
                 )}
                 
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
-                  <span>Total</span>
+                  <span className="text-gray-900">Total</span>
                   <span className="text-green-600">{formatMoney(sale.total)}</span>
                 </div>
               </div>

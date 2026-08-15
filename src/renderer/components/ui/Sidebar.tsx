@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   ShoppingCart,
+  Receipt,
   Package,
   Users,
   Truck,
@@ -18,6 +19,7 @@ import { cn } from "@/renderer/lib/utils";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: ShoppingCart, label: "Ventas / POS", path: "/pos" },
+  { icon: Receipt, label: "Historial de Ventas", path: "/sales" },
   { icon: Package, label: "Inventario", path: "/inventory" },
   { icon: Users, label: "Clientes", path: "/customers" },
   { icon: Truck, label: "Proveedores", path: "/suppliers" },

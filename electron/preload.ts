@@ -117,6 +117,12 @@ const electronAPI = {
     }): Promise<any> => ipcRenderer.invoke("sales:create", data),
     getById: (id: number): Promise<any> =>
       ipcRenderer.invoke("sales:getById", id),
+    getByDateRange: (
+      startDate: string,
+      endDate: string,
+      includeCancelled?: boolean,
+    ): Promise<any[]> =>
+      ipcRenderer.invoke("sales:getByDateRange", startDate, endDate, includeCancelled),
     getToday: (): Promise<any> => ipcRenderer.invoke("sales:getToday"),
     cancel: (id: number): Promise<boolean> =>
       ipcRenderer.invoke("sales:cancel", id),

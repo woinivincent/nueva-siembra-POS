@@ -70,6 +70,10 @@ export interface SalePayment {
 export interface Sale {
   id: number;
   customerId: number | null;
+  /** Nombre del cliente, resuelto por el backend. */
+  customerName: string | null;
+  /** Unidades vendidas en total. Sólo viene en los listados. */
+  itemsCount?: number;
   subtotal: number;
   tax: number;
  
@@ -137,6 +141,11 @@ export interface ElectronAPI {
   sales: {
     create: (data: CreateSaleData) => Promise<Sale>;
     getById: (id: number) => Promise<Sale | null>;
+    getByDateRange: (
+      startDate: string,
+      endDate: string,
+      includeCancelled?: boolean,
+    ) => Promise<Sale[]>;
     getToday: () => Promise<Sale[]>;
     cancel: (id: number) => Promise<boolean>;
   };

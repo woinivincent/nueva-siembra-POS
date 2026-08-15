@@ -184,6 +184,18 @@ export function registerIpcHandlers() {
     }
   });
 
+  ipcMain.handle(
+    "sales:getByDateRange",
+    (_event, startDate: string, endDate: string, includeCancelled?: boolean) => {
+      try {
+        return salesRepository.getByDateRange(startDate, endDate, includeCancelled);
+      } catch (error) {
+        console.error("Error getting sales by date range:", error);
+        throw error;
+      }
+    },
+  );
+
   ipcMain.handle("sales:getToday", () => {
     try {
       return salesRepository.getToday();

@@ -35,6 +35,10 @@ export interface SalePayment {
 export interface SaleDTO {
   id: number;
   customerId: number | null;
+  /** Nombre del cliente, para no tener que resolverlo en cada pantalla. */
+  customerName: string | null;
+  /** Unidades vendidas en total. Sólo viene en los listados. */
+  itemsCount?: number;
   subtotal: number;
   tax: number;
   discount: number;
@@ -88,10 +92,12 @@ export interface CreateSaleData {
   }[];
 }
 
-function toSaleDTO(row: Sale): SaleDTO {
+function toSaleDTO(row: Sale & { customer_name?: string | null; items_count?: number }): SaleDTO {
   return {
     id: row.id,
     customerId: row.customer_id,
+    customerName: row.customer_name ?? null,
+    ...(row.items_count !== undefined ? { itemsCount: row.items_count } : {}),
     subtotal: row.subtotal,
     tax: row.tax,
     discount: row.discount,
@@ -195,8 +201,13 @@ export class SalesRepository {
 
   getById(id: number): SaleDTO | null {
     try {
-      const stmt = sqlite.prepare('SELECT * FROM sales WHERE id = ?');
-      const result = stmt.get(id) as Sale | undefined;
+      const stmt = sqlite.prepare(`
+        SELECT s.*, c.first_name || ' ' || c.last_name AS customer_name
+        FROM sales s
+        LEFT JOIN customers c ON s.customer_id = c.id
+        WHERE s.id = ?
+      `);
+      const result = stmt.get(id) as (Sale & { customer_name: string | null }) | undefined;
 
       if (!result) return null;
 
@@ -240,6 +251,38 @@ export class SalesRepository {
     }
   }
 
+
+  /**
+   * Ventas de un período, con el nombre del cliente y la cantidad de
+   * unidades, listas para mostrar en la grilla sin consultas extra.
+   */
+  getByDateRange(startDate: string, endDate: string, includeCancelled = false): SaleDTO[] {
+    try {
+      const start = Math.floor(new Date(`${startDate}T00:00:00`).getTime() / 1000);
+      const end = Math.floor(new Date(`${endDate}T23:59:59.999`).getTime() / 1000);
+
+      const stmt = sqlite.prepare(`
+        SELECT
+          s.*,
+          c.first_name || ' ' || c.last_name AS customer_name,
+          COALESCE((SELECT SUM(si.quantity) FROM sale_items si WHERE si.sale_id = s.id), 0) AS items_count
+        FROM sales s
+        LEFT JOIN customers c ON s.customer_id = c.id
+        WHERE s.created_at >= ? AND s.created_at <= ?
+          ${includeCancelled ? '' : "AND s.status = 'completed'"}
+        ORDER BY s.created_at DESC, s.id DESC
+      `);
+
+      const results = stmt.all(start, end) as (Sale & {
+        customer_name: string | null;
+        items_count: number;
+      })[];
+      return results.map(toSaleDTO);
+    } catch (error) {
+      console.error('Error in getByDateRange:', error);
+      return [];
+    }
+  }
 
   getToday(): SaleDTO[] {
     try {
