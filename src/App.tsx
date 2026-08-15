@@ -6,10 +6,9 @@ import { POSPage } from "./renderer/pages/POSpage";
 import { Inventory } from "./renderer/pages/Inventory";
 import { Customers } from "./renderer/pages/Customers";
 import { Suppliers } from "./renderer/pages/Suppliers";
-import { CashRegisterPage } from "./renderer/pages/CashRegisterPage";
+import { Expenses } from "./renderer/pages/Expenses";
 import { Reports } from "./renderer/pages/Reports";
 import { Settings } from "./renderer/pages/Settings";
-import { ReserveFund } from "./renderer/pages/ReserveFund";
 import "./index.css";
 
 function App() {
@@ -23,9 +22,8 @@ function App() {
             <Route path="inventory" element={<Inventory />} />
             <Route path="customers" element={<Customers />} />
             <Route path="suppliers" element={<Suppliers />} />
-            <Route path="cash-register" element={<CashRegisterPage />} />
+            <Route path="expenses" element={<Expenses />} />
 
-            <Route path="/reserve" element={<ReserveFund />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
           </Route>

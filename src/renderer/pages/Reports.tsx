@@ -1,7 +1,7 @@
 // src/renderer/pages/Reports.tsx
 import { useState } from 'react';
-import { Calendar, Download, TrendingUp, ShoppingCart, DollarSign, CreditCard, ArrowDownCircle, Archive } from 'lucide-react';
-import type { SalesReportSummary } from '@/shared/types/electron';
+import { Calendar, Download, TrendingUp, ShoppingCart, DollarSign, CreditCard, ArrowDownCircle, Briefcase, Users } from 'lucide-react';
+import type { SalesReportSummary, ExpensesSummary } from '@/shared/types/electron';
 
 export function Reports() {
   const [startDate, setStartDate] = useState(() => {
@@ -13,7 +13,7 @@ export function Reports() {
     return new Date().toISOString().split('T')[0];
   });
   const [report, setReport] = useState<SalesReportSummary | null>(null);
-  const [expensesReport, setExpensesReport] = useState<any | null>(null);
+  const [expensesReport, setExpensesReport] = useState<ExpensesSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -57,8 +57,6 @@ async function handleExport() {
   const getPaymentMethodLabel = (method: string) => {
     const labels: Record<string, string> = {
       cash: 'Efectivo',
-      debit: 'Débito',
-      credit: 'Crédito',
       transfer: 'Transferencia',
     };
     return labels[method] || method;
@@ -257,7 +255,7 @@ async function handleExport() {
                         <td className="px-4 py-2 text-right text-black">{day.totalTransactions}</td>
                         <td className="px-4 py-2 text-right text-green-600">{formatMoney(day.avgTicket)}</td>
                         <td className="px-4 py-2 text-right  text-green-600">{formatMoney(day.cash)}</td>
-                        <td className="px-4 py-2 text-right  text-green-600">{formatMoney(day.debit + day.credit + day.transfer)}</td>
+                        <td className="px-4 py-2 text-right  text-green-600">{formatMoney(day.transfer)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -268,10 +266,9 @@ async function handleExport() {
         </div>
       )}
 
-      {/* Egresos de caja */}
+      {/* Egresos, separados entre negocio y sueldo */}
       {expensesReport && (
         <div className="space-y-6">
-          {/* KPIs egresos */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white rounded-xl shadow p-6">
               <div className="flex items-center gap-3">
@@ -280,135 +277,105 @@ async function handleExport() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Total Egresos</p>
-                  <p className="text-2xl font-bold text-red-600">{formatMoney(expensesReport.totalExpenses)}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-orange-100 rounded-lg">
-                  <DollarSign className="w-6 h-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Egresos Efectivo</p>
-                  <p className="text-2xl font-bold text-orange-600">{formatMoney(expensesReport.totalExpensesCash)}</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {formatMoney(expensesReport.total)}
+                  </p>
                 </div>
               </div>
             </div>
             <div className="bg-white rounded-xl shadow p-6">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-blue-100 rounded-lg">
-                  <CreditCard className="w-6 h-6 text-blue-600" />
+                  <Briefcase className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Egresos Transferencia</p>
-                  <p className="text-2xl font-bold text-blue-600">{formatMoney(expensesReport.totalExpensesTransfer)}</p>
+                  <p className="text-sm text-gray-500">Egresos de Negocio</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatMoney(expensesReport.business)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow p-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <Users className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Egresos de Sueldo</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {formatMoney(expensesReport.salary)}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Tabla de egresos */}
-          {expensesReport.expenses.length > 0 && (
-            <div className="bg-white rounded-xl shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <ArrowDownCircle className="w-5 h-5 text-red-500" />
-                Egresos de Caja
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Fecha</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Hora</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Concepto</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Descripción</th>
-                      <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Medio</th>
-                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Monto</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {expensesReport.expenses.map((expense: any) => (
-                      <tr key={expense.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 text-black font-medium">{expense.date}</td>
-                        <td className="px-4 py-2 text-gray-500">{expense.time}</td>
-                        <td className="px-4 py-2 text-black">{expense.concept}</td>
-                        <td className="px-4 py-2 text-gray-500 text-sm">{expense.description || '-'}</td>
-                        <td className="px-4 py-2 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            expense.paymentMethod === 'transfer'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-orange-100 text-orange-700'
-                          }`}>
-                            {expense.paymentMethod === 'transfer' ? 'Transferencia' : 'Efectivo'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2 text-right text-red-600 font-semibold">{formatMoney(expense.amount)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {/* Una tabla por tipo, para que se vea bien claro */}
+          {([
+            { type: 'business', label: 'Egresos de Negocio', total: expensesReport.business, accent: 'text-blue-600', icon: Briefcase },
+            { type: 'salary', label: 'Egresos de Sueldo', total: expensesReport.salary, accent: 'text-purple-600', icon: Users },
+          ] as const).map((group) => {
+            const rows = expensesReport.expenses.filter((e) => e.type === group.type);
+            if (rows.length === 0) return null;
+            const Icon = group.icon;
 
-          {/* Movimientos Caja Reserva */}
-          {expensesReport.reserveMovements.length > 0 && (
-            <div className="bg-white rounded-xl shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <Archive className="w-5 h-5 text-purple-500" />
-                  Movimientos Caja Reserva
-                </h3>
-                <div className="flex gap-4 text-sm">
-                  <span className="text-green-600 font-medium">Ingresos: {formatMoney(expensesReport.totalReserveIn)}</span>
-                  <span className="text-red-600 font-medium">Egresos: {formatMoney(expensesReport.totalReserveOut)}</span>
+            return (
+              <div key={group.type} className="bg-white rounded-xl shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <Icon className={`w-5 h-5 ${group.accent}`} />
+                    {group.label}
+                  </h3>
+                  <span className={`font-bold ${group.accent}`}>{formatMoney(group.total)}</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Fecha</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Concepto</th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Descripción</th>
+                        <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Medio</th>
+                        <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Monto</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {rows.map((expense) => (
+                        <tr key={expense.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 text-black font-medium">
+                            {new Date(expense.date).toLocaleDateString('es-AR')}
+                          </td>
+                          <td className="px-4 py-2 text-black">{expense.concept}</td>
+                          <td className="px-4 py-2 text-gray-500 text-sm">
+                            {expense.description || '-'}
+                          </td>
+                          <td className="px-4 py-2 text-center">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                expense.paymentMethod === 'transfer'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-orange-100 text-orange-700'
+                              }`}
+                            >
+                              {expense.paymentMethod === 'transfer' ? 'Transferencia' : 'Efectivo'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-right text-red-600 font-semibold">
+                            {formatMoney(expense.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Fecha</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Hora</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Concepto</th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Categoría</th>
-                      <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Tipo</th>
-                      <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">Monto</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {expensesReport.reserveMovements.map((mov: any) => (
-                      <tr key={mov.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 text-black font-medium">{mov.date}</td>
-                        <td className="px-4 py-2 text-gray-500">{mov.time}</td>
-                        <td className="px-4 py-2 text-black">{mov.concept}</td>
-                        <td className="px-4 py-2 text-gray-500 text-sm">{mov.category || '-'}</td>
-                        <td className="px-4 py-2 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            mov.type === 'income'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}>
-                            {mov.type === 'income' ? 'Ingreso' : 'Egreso'}
-                          </span>
-                        </td>
-                        <td className={`px-4 py-2 text-right font-semibold ${
-                          mov.type === 'income' ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {mov.type === 'income' ? '+' : '-'}{formatMoney(mov.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+            );
+          })}
 
-          {expensesReport.expenses.length === 0 && expensesReport.reserveMovements.length === 0 && (
+          {expensesReport.expenses.length === 0 && (
             <div className="bg-white rounded-xl shadow p-6 text-center text-gray-400">
-              Sin egresos ni movimientos de reserva en el período.
+              Sin egresos en el período.
             </div>
           )}
         </div>

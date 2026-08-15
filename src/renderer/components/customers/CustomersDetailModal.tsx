@@ -71,8 +71,6 @@ export function CustomerDetailModal({ isOpen, onClose, customer }: Props) {
   const getPaymentMethodLabel = (method: string) => {
     const labels: Record<string, string> = {
       cash: 'Efectivo',
-      debit: 'Débito',
-      credit: 'Crédito',
       transfer: 'Transferencia',
     };
     return labels[method] || method;

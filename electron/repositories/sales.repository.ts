@@ -4,12 +4,11 @@ import { sqlite } from '../database/client';
 export interface Sale {
   id: number;
   customer_id: number | null;
-  cash_register_id: number | null;
   subtotal: number;
   tax: number;
   discount: number;
   total: number;
-  payment_method: 'cash' | 'debit' | 'credit' | 'transfer' | 'mixed';
+  payment_method: 'cash' | 'transfer';
   status: 'completed' | 'suspended' | 'cancelled';
   created_at: number;
   user_id: number | null;
@@ -36,12 +35,11 @@ export interface SalePayment {
 export interface SaleDTO {
   id: number;
   customerId: number | null;
-  cashRegisterId: number | null;
   subtotal: number;
   tax: number;
   discount: number;
   total: number;
-  paymentMethod: 'cash' | 'debit' | 'credit' | 'transfer' | 'mixed';
+  paymentMethod: 'cash' | 'transfer';
   status: 'completed' | 'suspended' | 'cancelled';
   createdAt: Date;
   userId: number | null;
@@ -75,7 +73,6 @@ export interface PaymentDetail {
 
 export interface CreateSaleData {
   customerId?: number;
-  cashRegisterId?: number;
   subtotal: number;
   tax: number;
   discount: number;
@@ -95,7 +92,6 @@ function toSaleDTO(row: Sale): SaleDTO {
   return {
     id: row.id,
     customerId: row.customer_id,
-    cashRegisterId: row.cash_register_id,
     subtotal: row.subtotal,
     tax: row.tax,
     discount: row.discount,
@@ -134,25 +130,21 @@ export class SalesRepository {
   create(data: CreateSaleData): SaleDTO | null {
     try {
       const now = Math.floor(Date.now() / 1000);
-      const isMixedPayment = data.payments && data.payments.length > 1;
 
       const createSale = sqlite.transaction(() => {
         // 1. Insertar venta
         const saleStmt = sqlite.prepare(`
-          INSERT INTO sales (customer_id, cash_register_id, subtotal, tax, discount, total, payment_method, status, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, 'completed', ?)
+          INSERT INTO sales (customer_id, subtotal, tax, discount, total, payment_method, status, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, 'completed', ?)
         `);
-
-        const paymentMethodForSale = isMixedPayment ? 'mixed' : data.paymentMethod;
 
         const saleResult = saleStmt.run(
           data.customerId || null,
-          data.cashRegisterId || null,
           data.subtotal,
           data.tax,
           data.discount,
           data.total,
-          paymentMethodForSale,
+          data.paymentMethod,
           now
         );
 
@@ -181,57 +173,14 @@ export class SalesRepository {
           updateStock.run(item.quantity, now, item.productId);
         }
 
-        // 4. Insertar pagos y movimientos de caja
+        // 4. Registrar el pago. Ya no se generan movimientos de caja porque
+        // no hay caja diaria: el medio de pago queda sólo para el reporte.
         const paymentStmt = sqlite.prepare(`
           INSERT INTO sale_payments (sale_id, payment_method, amount, created_at)
           VALUES (?, ?, ?, ?)
         `);
 
-        const movementStmt = sqlite.prepare(`
-          INSERT INTO cash_movements (cash_register_id, type, amount, concept, description, created_at)
-          VALUES (?, 'sale', ?, ?, ?, ?)
-        `);
-
-        if (isMixedPayment && data.payments) {
-          // Pago mixto: insertar cada pago por separado
-          for (const payment of data.payments) {
-            if (payment.amount > 0) {
-              // Insertar en sale_payments
-              paymentStmt.run(saleId, payment.method, payment.amount, now);
-
-              // Insertar movimiento de caja para cada método
-              if (data.cashRegisterId) {
-                const methodLabel = {
-                  cash: 'EFECTIVO',
-                  debit: 'DÉBITO',
-                  credit: 'CRÉDITO',
-                  transfer: 'TRANSFERENCIA'
-                }[payment.method];
-
-                movementStmt.run(
-                  data.cashRegisterId,
-                  payment.amount,
-                  `Venta #${saleId} (${methodLabel})`,
-                  `Pago mixto - ${data.items.length} productos`,
-                  now
-                );
-              }
-            }
-          }
-        } else {
-          // Pago simple: un solo pago
-          paymentStmt.run(saleId, data.paymentMethod, data.total, now);
-
-          if (data.cashRegisterId) {
-            movementStmt.run(
-              data.cashRegisterId,
-              data.total,
-              `Venta #${saleId}`,
-              `${data.items.length} productos - ${data.paymentMethod.toUpperCase()}`,
-              now
-            );
-          }
-        }
+        paymentStmt.run(saleId, data.paymentMethod, data.total, now);
 
         return saleId;
       });
@@ -291,20 +240,6 @@ export class SalesRepository {
     }
   }
 
-  getByCashRegister(cashRegisterId: number): SaleDTO[] {
-    try {
-      const stmt = sqlite.prepare(`
-        SELECT * FROM sales
-        WHERE cash_register_id = ? AND status = 'completed'
-        ORDER BY created_at DESC
-      `);
-      const results = stmt.all(cashRegisterId) as Sale[];
-      return results.map(toSaleDTO);
-    } catch (error) {
-      console.error('Error in getByCashRegister:', error);
-      return [];
-    }
-  }
 
   getToday(): SaleDTO[] {
     try {
@@ -342,12 +277,6 @@ export class SalesRepository {
             sqlite.prepare('UPDATE products SET stock = stock + ?, updated_at = ? WHERE id = ?')
               .run(item.quantity, now, item.productId);
           }
-        }
-
-        // 3. Eliminar movimientos de caja asociados (puede haber múltiples si fue pago mixto)
-        if (sale.cashRegisterId) {
-          sqlite.prepare("DELETE FROM cash_movements WHERE concept LIKE ? AND cash_register_id = ?")
-            .run(`Venta #${id}%`, sale.cashRegisterId);
         }
 
         // 4. Eliminar pagos

@@ -227,7 +227,7 @@ export function Cart({ onCheckout }: CartProps) {
                     className={`rounded-lg border-2 p-2 space-y-2 ${
                       block.complete
                         ? "border-primary/40 bg-primary/5"
-                        : "border-amber-400/60 bg-amber-50/50"
+                        : "border-amber-500/60 bg-amber-500/10"
                     }`}
                   >
                     <div className="flex items-center justify-between px-1">
@@ -236,7 +236,7 @@ export function Cart({ onCheckout }: CartProps) {
                       </span>
                       <span
                         className={`text-xs font-medium ${
-                          block.complete ? "text-primary" : "text-amber-600"
+                          block.complete ? "text-primary" : "text-amber-400"
                         }`}
                       >
                         {block.complete

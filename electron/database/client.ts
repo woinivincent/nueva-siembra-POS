@@ -24,17 +24,6 @@ export function initializeDatabase() {
 
 function runMigrations() {
   try {
-    // Migración: agregar payment_method a cash_movements
-    const movementsInfo = sqlite
-      .prepare("PRAGMA table_info(cash_movements)")
-      .all() as any[];
-    const hasPaymentMethod = movementsInfo.some((col: any) => col.name === "payment_method");
-    if (!hasPaymentMethod) {
-      console.log("📦 Ejecutando migración: agregar payment_method a cash_movements...");
-      sqlite.exec(`ALTER TABLE cash_movements ADD COLUMN payment_method TEXT DEFAULT 'cash'`);
-      console.log("✅ Migración completada");
-    }
-
     // Migración: precios por pack. Reemplazan al precio diferenciado por
     // medio de pago (price_card), que ya no se usa porque el precio no
     // depende de si se paga en efectivo o por transferencia.
@@ -57,53 +46,93 @@ function runMigrations() {
       console.log("✅ Migración completada");
     }
 
-    // Permitir payment_method = 'mixed' en sales (pago dividido)
-    const salesSqlRow = sqlite
-      .prepare(
-        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'sales'",
-      )
-      .get() as { sql?: string } | undefined;
+    // Migración: baja de la caja diaria y de la caja reserva.
+    //
+    // Ya no hay local ni apertura/cierre de caja, así que los egresos dejan de
+    // vivir dentro de cash_movements y pasan a su propia tabla. Antes de
+    // borrar nada, se rescatan los egresos ya cargados: quedan como gastos de
+    // negocio, que es lo que eran hasta ahora.
+    const tableExists = (name: string) =>
+      !!sqlite
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+        .get(name);
 
-    const salesSql = (salesSqlRow?.sql || "").toLowerCase();
-    const salesAllowsMixed = salesSql.includes("mixed");
+    if (tableExists("cash_movements")) {
+      console.log("📦 Ejecutando migración: mover egresos de caja a la tabla expenses...");
 
-    if (!salesAllowsMixed) {
-      console.log("📦 Ejecutando migración: permitir pago 'mixed' en sales...");
+      const movementColumns = new Set(
+        (sqlite.prepare("PRAGMA table_info(cash_movements)").all() as any[]).map(
+          (col: any) => col.name,
+        ),
+      );
+      // payment_method sólo existe en bases que llegaron a tener esa versión
+      const method = movementColumns.has("payment_method")
+        ? "CASE WHEN payment_method = 'transfer' THEN 'transfer' ELSE 'cash' END"
+        : "'cash'";
 
-      // SQLite no permite alterar CHECK constraints directamente.
-      // Re-creamos la tabla manteniendo los datos.
+      sqlite.exec(`
+        INSERT INTO expenses (type, amount, concept, description, payment_method, date, created_at)
+        SELECT 'business', amount, concept, description, ${method},
+               COALESCE(created_at, strftime('%s', 'now')),
+               COALESCE(created_at, strftime('%s', 'now'))
+        FROM cash_movements
+        WHERE type = 'expense';
+      `);
+
+      const moved = sqlite
+        .prepare("SELECT COUNT(*) as count FROM expenses")
+        .get() as { count: number };
+      console.log(`✅ ${moved.count} egresos conservados`);
+    }
+
+    // Las ventas ya no pertenecen a una caja, y el medio de pago queda
+    // reducido a efectivo o transferencia. Las ventas viejas con débito,
+    // crédito o pago mixto se registran como transferencia, que es el medio
+    // no-efectivo que sigue existiendo.
+    const salesColumns = new Set(
+      (sqlite.prepare("PRAGMA table_info(sales)").all() as any[]).map((col: any) => col.name),
+    );
+
+    if (salesColumns.has("cash_register_id")) {
+      console.log("📦 Ejecutando migración: desacoplar ventas de la caja...");
+
       sqlite.exec("PRAGMA foreign_keys = OFF;");
       const migrateSales = sqlite.transaction(() => {
         sqlite.exec(`
-          CREATE TABLE IF NOT EXISTS sales_new (
+          CREATE TABLE sales_new (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             customer_id INTEGER REFERENCES customers(id),
-            cash_register_id INTEGER REFERENCES cash_registers(id),
             subtotal REAL NOT NULL,
             tax REAL DEFAULT 0,
             discount REAL DEFAULT 0,
             total REAL NOT NULL,
-            payment_method TEXT NOT NULL CHECK(payment_method IN ('cash', 'debit', 'credit', 'transfer', 'mixed')),
+            payment_method TEXT NOT NULL CHECK(payment_method IN ('cash', 'transfer')),
             status TEXT DEFAULT 'completed' CHECK(status IN ('completed', 'suspended', 'cancelled')),
             created_at INTEGER DEFAULT (strftime('%s', 'now')),
             user_id INTEGER
           );
         `);
 
-        // Copiar datos (preservando ids)
         sqlite.exec(`
-          INSERT INTO sales_new (id, customer_id, cash_register_id, subtotal, tax, discount, total, payment_method, status, created_at, user_id)
-          SELECT id, customer_id, cash_register_id, subtotal, tax, discount, total, payment_method, status, created_at, user_id
+          INSERT INTO sales_new (id, customer_id, subtotal, tax, discount, total, payment_method, status, created_at, user_id)
+          SELECT id, customer_id, subtotal, tax, discount, total,
+                 CASE WHEN payment_method = 'cash' THEN 'cash' ELSE 'transfer' END,
+                 status, created_at, user_id
           FROM sales;
         `);
 
         sqlite.exec("DROP TABLE sales;");
         sqlite.exec("ALTER TABLE sales_new RENAME TO sales;");
-
-        // Re-crear índices
         sqlite.exec("CREATE INDEX IF NOT EXISTS sales_customer_idx ON sales(customer_id);");
         sqlite.exec("CREATE INDEX IF NOT EXISTS sales_date_idx ON sales(created_at);");
         sqlite.exec("CREATE INDEX IF NOT EXISTS sales_status_idx ON sales(status);");
+
+        if (tableExists("sale_payments")) {
+          sqlite.exec(`
+            UPDATE sale_payments
+            SET payment_method = CASE WHEN payment_method = 'cash' THEN 'cash' ELSE 'transfer' END;
+          `);
+        }
       });
 
       try {
@@ -113,6 +142,15 @@ function runMigrations() {
         sqlite.exec("PRAGMA foreign_keys = ON;");
       }
     }
+
+    // Recién ahora, con los datos ya rescatados, se pueden borrar las tablas.
+    for (const table of ["cash_movements", "cash_registers", "reserve_fund"]) {
+      if (tableExists(table)) {
+        console.log(`📦 Ejecutando migración: eliminar tabla ${table}...`);
+        sqlite.exec(`DROP TABLE ${table}`);
+      }
+    }
+
   } catch (error) {
     console.error("Error en migraciones:", error);
   }
@@ -175,53 +213,23 @@ function createTables() {
       updated_at INTEGER DEFAULT (strftime('%s', 'now'))
     );
 
-    CREATE TABLE IF NOT EXISTS cash_registers (
+    CREATE TABLE IF NOT EXISTS expenses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      opened_at INTEGER NOT NULL,
-      closed_at INTEGER,
-      opening_amount REAL NOT NULL,
-      closing_amount REAL,
-      expected_amount REAL,
-      difference REAL,
-      status TEXT DEFAULT 'open' NOT NULL CHECK(status IN ('open', 'closed')),
-      user_id INTEGER,
-      notes TEXT
-    );
-
-    CREATE INDEX IF NOT EXISTS cash_registers_status_idx ON cash_registers(status);
-    CREATE INDEX IF NOT EXISTS cash_registers_date_idx ON cash_registers(opened_at);
-
-    CREATE TABLE IF NOT EXISTS cash_movements (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cash_register_id INTEGER NOT NULL REFERENCES cash_registers(id),
-      type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'sale')),
+      type TEXT NOT NULL CHECK(type IN ('business', 'salary')),
       amount REAL NOT NULL,
       concept TEXT NOT NULL,
       description TEXT,
+      payment_method TEXT NOT NULL DEFAULT 'cash' CHECK(payment_method IN ('cash', 'transfer')),
+      date INTEGER NOT NULL,
       created_at INTEGER DEFAULT (strftime('%s', 'now'))
     );
 
-    CREATE INDEX IF NOT EXISTS cash_movements_register_idx ON cash_movements(cash_register_id);
-    CREATE INDEX IF NOT EXISTS cash_movements_type_idx ON cash_movements(type);
-CREATE TABLE IF NOT EXISTS reserve_fund (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
-      amount REAL NOT NULL,
-      concept TEXT NOT NULL,
-      category TEXT,
-      description TEXT,
-      source_cash_register_id INTEGER REFERENCES cash_registers(id),
-      created_at INTEGER DEFAULT (strftime('%s', 'now'))
-    );
+    CREATE INDEX IF NOT EXISTS expenses_type_idx ON expenses(type);
+    CREATE INDEX IF NOT EXISTS expenses_date_idx ON expenses(date);
 
-    CREATE INDEX IF NOT EXISTS reserve_fund_type_idx ON reserve_fund(type);
-    CREATE INDEX IF NOT EXISTS reserve_fund_date_idx ON reserve_fund(created_at);
-    CREATE INDEX IF NOT EXISTS reserve_fund_category_idx ON reserve_fund(category);
-    
     CREATE TABLE IF NOT EXISTS sales (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       customer_id INTEGER REFERENCES customers(id),
-      cash_register_id INTEGER REFERENCES cash_registers(id),
       subtotal REAL NOT NULL,
       tax REAL DEFAULT 0,
       discount REAL DEFAULT 0,

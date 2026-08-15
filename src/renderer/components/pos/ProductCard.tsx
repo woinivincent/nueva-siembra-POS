@@ -13,7 +13,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const isLowStock = product.stock <= (product.stockMin ?? 0);
   
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
+    <Card
+      onClick={product.stock > 0 ? onAddToCart : undefined}
+      className={`overflow-hidden hover:shadow-lg transition-shadow group ${
+        product.stock > 0 ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
+      }`}
+    >
       <div className="aspect-square bg-muted relative overflow-hidden">
         {product.image ? (
           <img 
@@ -54,9 +59,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             <p className="text-xs text-muted-foreground">Stock: {product.stock}</p>
           </div>
           
-          <Button 
-            size="icon" 
-            onClick={onAddToCart}
+          <Button
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart();
+            }}
             disabled={product.stock <= 0}
             className="rounded-full"
           >

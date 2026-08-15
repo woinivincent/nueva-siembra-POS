@@ -44,12 +44,12 @@ export function PackPicker({ product, onPick, onClose }: PackPickerProps) {
       ref={ref}
       role="dialog"
       aria-label={`Elegir precio para ${product.name}`}
-      className="absolute inset-x-2 bottom-2 z-30 rounded-xl border border-border bg-popover p-2 shadow-xl space-y-1"
+      className="absolute left-1/2 -translate-x-1/2 bottom-2 z-30 w-[200px] rounded-xl border border-border bg-popover p-2 shadow-2xl space-y-1"
     >
       <button
         type="button"
         onClick={() => onPick('unit')}
-        className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-secondary text-secondary-foreground hover:bg-accent transition-colors"
+        className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-secondary text-secondary-foreground hover:bg-accent transition-colors whitespace-nowrap"
       >
         <span>Individual</span>
         <span className="tabular-nums">{money(product.price)}</span>
@@ -62,10 +62,10 @@ export function PackPicker({ product, onPick, onClose }: PackPickerProps) {
             key={size}
             type="button"
             onClick={() => onPick(size)}
-            className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+            className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors whitespace-nowrap"
           >
             <span>{packLabel(size)}</span>
-            <span className="tabular-nums">{money(price)} c/u</span>
+            <span className="tabular-nums text-xs">{money(price)} c/u</span>
           </button>
         );
       })}

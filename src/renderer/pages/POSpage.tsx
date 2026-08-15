@@ -1,22 +1,28 @@
 // src/pages/POSPage.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { ProductGrid } from '@/renderer/components/pos/ProductGrid';
 import { Cart } from '@/renderer/components/pos/Cart';
 import { QuickAccessButtons } from '@/renderer/components/pos/QuickAccessButtons';
 import { Button } from '@/renderer/components/ui/button';
 
-const categories = [
-  { id: 'all', label: 'Todos' },
-  { id: 'Ensaladas', label: 'Ensaladas' },
-  { id: 'Bowls', label: 'Bowls' },
-  { id: 'Bebidas', label: 'Bebidas' },
-  { id: 'Wraps', label: 'Wraps' },
-];
-
 export function POSPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  // Las categorías salen del inventario, así que acompañan lo que haya cargado
+  const [categories, setCategories] = useState([{ id: 'all', label: 'Todos' }]);
+
+  useEffect(() => {
+    window.electronAPI.products
+      .getCategories()
+      .then((names) =>
+        setCategories([
+          { id: 'all', label: 'Todos' },
+          ...names.map((name) => ({ id: name, label: name })),
+        ]),
+      )
+      .catch((error) => console.error('Error loading categories:', error));
+  }, []);
 
   return (
     <div className="h-screen flex flex-col">

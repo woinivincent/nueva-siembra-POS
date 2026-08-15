@@ -35,13 +35,12 @@ export interface DashboardStats {
     stockMin: number;
   }[];
   
-  // Caja actual
-  cashRegister: {
-    isOpen: boolean;
-    openingAmount: number;
-    currentAmount: number;
-    salesCount: number;
-  } | null;
+  // Egresos del día, separados por tipo
+  todayExpenses: {
+    total: number;
+    business: number;
+    salary: number;
+  };
   
   // Cumpleaños
   todayBirthdays: {
@@ -124,22 +123,16 @@ export class DashboardRepository {
       `);
       const lowStock = lowStockStmt.all() as any[];
 
-      // Caja actual
-      const cashStmt = sqlite.prepare(`
-        SELECT 
-          cr.id,
-          cr.opening_amount,
-          cr.status,
-          COALESCE(SUM(CASE WHEN cm.type = 'sale' THEN cm.amount ELSE 0 END), 0) as sales_total,
-          COALESCE(SUM(CASE WHEN cm.type = 'income' THEN cm.amount ELSE 0 END), 0) as income_total,
-          COALESCE(SUM(CASE WHEN cm.type = 'expense' THEN cm.amount ELSE 0 END), 0) as expense_total,
-          COUNT(CASE WHEN cm.type = 'sale' THEN 1 END) as sales_count
-        FROM cash_registers cr
-        LEFT JOIN cash_movements cm ON cr.id = cm.cash_register_id
-        WHERE cr.status = 'open'
-        GROUP BY cr.id
+      // Egresos del día
+      const expensesStmt = sqlite.prepare(`
+        SELECT
+          COALESCE(SUM(amount), 0) as total,
+          COALESCE(SUM(CASE WHEN type = 'business' THEN amount ELSE 0 END), 0) as business,
+          COALESCE(SUM(CASE WHEN type = 'salary' THEN amount ELSE 0 END), 0) as salary
+        FROM expenses
+        WHERE date >= ?
       `);
-      const cashRegister = cashStmt.get() as any;
+      const todayExpenses = expensesStmt.get(todayStart) as any;
 
       // Cumpleaños de hoy
       const month2d = String(now.getMonth() + 1).padStart(2, '0');
@@ -182,12 +175,11 @@ export class DashboardRepository {
           stock: p.stock,
           stockMin: p.stockMin,
         })),
-        cashRegister: cashRegister ? {
-          isOpen: cashRegister.status === 'open',
-          openingAmount: cashRegister.opening_amount,
-          currentAmount: cashRegister.opening_amount + cashRegister.sales_total + cashRegister.income_total - cashRegister.expense_total,
-          salesCount: cashRegister.sales_count,
-        } : null,
+        todayExpenses: {
+          total: todayExpenses?.total || 0,
+          business: todayExpenses?.business || 0,
+          salary: todayExpenses?.salary || 0,
+        },
         todayBirthdays: birthdays,
         monthSales: month.total_sales || 0,
         monthTransactions: month.total_transactions || 0,
@@ -203,7 +195,7 @@ export class DashboardRepository {
         todayByPayment: { cash: 0, debit: 0, credit: 0, transfer: 0 },
         topProducts: [],
         lowStockProducts: [],
-        cashRegister: null,
+        todayExpenses: { total: 0, business: 0, salary: 0 },
         todayBirthdays: [],
         monthSales: 0,
         monthTransactions: 0,

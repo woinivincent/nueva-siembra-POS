@@ -58,45 +58,15 @@ export const suppliers = sqliteTable('suppliers', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 });
 
-export const cashRegisters = sqliteTable('cash_registers', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  openedAt: integer('opened_at', { mode: 'timestamp' }).notNull(),
-  closedAt: integer('closed_at', { mode: 'timestamp' }),
-  openingAmount: real('opening_amount').notNull(),
-  closingAmount: real('closing_amount'),
-  expectedAmount: real('expected_amount'),
-  difference: real('difference'),
-  status: text('status', { enum: ['open', 'closed'] }).default('open').notNull(),
-  userId: integer('user_id'),
-  notes: text('notes'),
-}, (table) => ({
-  statusIdx: index('cash_registers_status_idx').on(table.status),
-  dateIdx: index('cash_registers_date_idx').on(table.openedAt),
-}));
-
-export const cashMovements = sqliteTable('cash_movements', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  cashRegisterId: integer('cash_register_id').notNull().references(() => cashRegisters.id),
-  type: text('type', { enum: ['income', 'expense', 'sale'] }).notNull(),
-  amount: real('amount').notNull(),
-  concept: text('concept').notNull(),
-  description: text('description'),
-  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
-}, (table) => ({
-  registerIdx: index('cash_movements_register_idx').on(table.cashRegisterId),
-  typeIdx: index('cash_movements_type_idx').on(table.type),
-}));
-
 export const sales = sqliteTable('sales', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   customerId: integer('customer_id').references(() => customers.id),
-  cashRegisterId: integer('cash_register_id').references(() => cashRegisters.id),
   subtotal: real('subtotal').notNull(),
   tax: real('tax').default(0),
   discount: real('discount').default(0),
   total: real('total').notNull(),
-  paymentMethod: text('payment_method', { 
-    enum: ['cash', 'debit', 'credit', 'transfer', 'mixed'] 
+  paymentMethod: text('payment_method', {
+    enum: ['cash', 'transfer']
   }).notNull(),
   status: text('status', { 
     enum: ['completed', 'suspended', 'cancelled'] 
@@ -122,6 +92,21 @@ export const saleItems = sqliteTable('sale_items', {
   productIdx: index('sale_items_product_idx').on(table.productId),
 }));
 
+export const expenses = sqliteTable('expenses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // 'business' = gasto del negocio, 'salary' = sueldo
+  type: text('type', { enum: ['business', 'salary'] }).notNull(),
+  amount: real('amount').notNull(),
+  concept: text('concept').notNull(),
+  description: text('description'),
+  paymentMethod: text('payment_method', { enum: ['cash', 'transfer'] }).default('cash').notNull(),
+  date: integer('date', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
+}, (table) => ({
+  typeIdx: index('expenses_type_idx').on(table.type),
+  dateIdx: index('expenses_date_idx').on(table.date),
+}));
+
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
@@ -141,7 +126,7 @@ export const salePayments = sqliteTable('sale_payments', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   saleId: integer('sale_id').notNull().references(() => sales.id),
   paymentMethod: text('payment_method', {
-    enum: ['cash', 'debit', 'credit', 'transfer']
+    enum: ['cash', 'transfer']
   }).notNull(),
   amount: real('amount').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),

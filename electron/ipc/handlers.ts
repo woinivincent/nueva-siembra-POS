@@ -1,15 +1,14 @@
 // electron/ipc/handlers.ts
 import { ipcMain } from "electron";
 import { productsRepository } from "../repositories/products.repository.js";
-import { cashRegisterRepository } from "../repositories/cash-register.repository.js";
+import { expensesRepository } from "../repositories/expenses.repository.js";
 import { salesRepository } from "../repositories/sales.repository.js";
 import { customersRepository } from '../repositories/customers.repository.js';
 import { suppliersRepository } from '../repositories/suppliers.repository.js';
-import { reportsRepository, expensesReportRepository } from '../repositories/reports.repository.js';
-import { reserveFundRepository } from '../repositories/reserve-fund.repository.js';
+import { reportsRepository } from '../repositories/reports.repository.js';
 import { dashboardRepository } from '../repositories/dashboard.repository.js';
 import { settingsRepository } from '../repositories/settings.repository.js';
-import { generateSalesExcel, generateCashRegisterExcel, generateReserveExcel } from '../services/excel.service';
+import { generateSalesExcel } from '../services/excel.service';
 import { selectProductImage, saveProductImage, deleteProductImage, getImageAsBase64 } from '../services/image.service.js';
 
 export function registerIpcHandlers() {
@@ -114,109 +113,58 @@ export function registerIpcHandlers() {
     }
   });
 
-  // ==================== CASH REGISTER ====================
-  ipcMain.handle("cash:getOpen", () => {
+  // ==================== EGRESOS ====================
+  ipcMain.handle("expenses:getAll", (_event, limit?: number) => {
     try {
-      return cashRegisterRepository.getOpenRegister();
+      return expensesRepository.getAll(limit);
     } catch (error) {
-      console.error("Error getting open register:", error);
+      console.error("Error getting expenses:", error);
       throw error;
     }
   });
 
   ipcMain.handle(
-    "cash:open",
-    (_event, openingAmount: number, userId?: number) => {
+    "expenses:getByDateRange",
+    (_event, startDate: string, endDate: string) => {
       try {
-        return cashRegisterRepository.openRegister(openingAmount, userId);
+        return expensesRepository.getByDateRange(startDate, endDate);
       } catch (error) {
-        console.error("Error opening register:", error);
+        console.error("Error getting expenses by date range:", error);
         throw error;
       }
     },
   );
 
   ipcMain.handle(
-    "cash:close",
-    (_event, id: number, closingAmount: number, notes?: string) => {
+    "expenses:getSummary",
+    (_event, startDate: string, endDate: string) => {
       try {
-        return cashRegisterRepository.closeRegister(id, closingAmount, notes);
+        return expensesRepository.getSummary(startDate, endDate);
       } catch (error) {
-        console.error("Error closing register:", error);
+        console.error("Error getting expenses summary:", error);
         throw error;
       }
     },
   );
 
-  ipcMain.handle("cash:getClosingSummary", (_event, registerId: number) => {
+  ipcMain.handle("expenses:create", (_event, data) => {
     try {
-      return cashRegisterRepository.getClosingSummary(registerId);
+      return expensesRepository.create(data);
     } catch (error) {
-      console.error("Error getting closing summary:", error);
+      console.error("Error creating expense:", error);
       throw error;
     }
   });
 
-  ipcMain.handle("cash:getHistory", (_event, limit?: number) => {
+  ipcMain.handle("expenses:delete", (_event, id: number) => {
     try {
-      return cashRegisterRepository.getHistory(limit);
+      return expensesRepository.delete(id);
     } catch (error) {
-      console.error("Error getting history:", error);
+      console.error("Error deleting expense:", error);
       throw error;
     }
   });
 
-  ipcMain.handle("cash:getMovements", (_event, registerId: number) => {
-    try {
-      return cashRegisterRepository.getMovementsByRegister(registerId);
-    } catch (error) {
-      console.error("Error getting movements:", error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle(
-    "cash:addMovement",
-    (
-      _event,
-      data: {
-        cashRegisterId: number;
-        type: "income" | "expense";
-        amount: number;
-        concept: string;
-        description?: string;
-        paymentMethod?: "cash" | "transfer";
-      },
-    ) => {
-      try {
-        return cashRegisterRepository.addMovement(data);
-      } catch (error) {
-        console.error("Error adding movement:", error);
-        throw error;
-      }
-    },
-  );
-
-  ipcMain.handle("cash:deleteMovement", (_event, id: number) => {
-    try {
-      return cashRegisterRepository.deleteMovement(id);
-    } catch (error) {
-      console.error("Error deleting movement:", error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle(
-    "cash:getSalesByPaymentMethod",
-    (_event, registerId: number) => {
-      try {
-        return cashRegisterRepository.getSalesByPaymentMethod(registerId);
-      } catch (error) {
-        console.error("Error getting sales by payment method:", error);
-        throw error;
-      }
-    },
-  );
   // ==================== SALES ====================
   ipcMain.handle("sales:create", (_event, data) => {
     try {
@@ -235,18 +183,6 @@ export function registerIpcHandlers() {
       throw error;
     }
   });
-
-  ipcMain.handle(
-    "sales:getByCashRegister",
-    (_event, cashRegisterId: number) => {
-      try {
-        return salesRepository.getByCashRegister(cashRegisterId);
-      } catch (error) {
-        console.error("Error getting sales by register:", error);
-        throw error;
-      }
-    },
-  );
 
   ipcMain.handle("sales:getToday", () => {
     try {
@@ -441,91 +377,9 @@ ipcMain.handle('reports:getSalesForExport', (_event, startDate: string, endDate:
 
 ipcMain.handle('reports:getExpensesReport', (_event, startDate: string, endDate: string) => {
   try {
-    return expensesReportRepository.getExpensesReport(startDate, endDate);
+    return expensesRepository.getSummary(startDate, endDate);
   } catch (error) {
     console.error('Error getting expenses report:', error);
-    throw error;
-  }
-});
-
-// ==================== RESERVE FUND (CAJA RESERVA) ====================
-ipcMain.handle('reserve:getBalance', () => {
-  try {
-    return reserveFundRepository.getBalance();
-  } catch (error) {
-    console.error('Error getting reserve balance:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('reserve:getAll', (_event, limit?: number) => {
-  try {
-    return reserveFundRepository.getAll(limit);
-  } catch (error) {
-    console.error('Error getting reserve movements:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('reserve:getCategories', () => {
-  try {
-    return reserveFundRepository.getCategories();
-  } catch (error) {
-    console.error('Error getting reserve categories:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('reserve:getSummary', () => {
-  try {
-    return reserveFundRepository.getSummary();
-  } catch (error) {
-    console.error('Error getting reserve summary:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('reserve:getSummaryByCategory', () => {
-  try {
-    return reserveFundRepository.getSummaryByCategory();
-  } catch (error) {
-    console.error('Error getting reserve summary by category:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('reserve:transferFromCash', (_event, { cashRegisterId, amount, concept, category }) => {
-  try {
-    return reserveFundRepository.transferFromCashRegister(cashRegisterId, amount, concept, category);
-  } catch (error) {
-    console.error('Error transferring to reserve:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('reserve:addExpense', (_event, data) => {
-  try {
-    return reserveFundRepository.addExpense(data);
-  } catch (error) {
-    console.error('Error adding reserve expense:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('reserve:addIncome', (_event, data) => {
-  try {
-    return reserveFundRepository.addIncome(data);
-  } catch (error) {
-    console.error('Error adding reserve income:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('reserve:delete', (_event, id: number) => {
-  try {
-    return reserveFundRepository.delete(id);
-  } catch (error) {
-    console.error('Error deleting reserve movement:', error);
     throw error;
   }
 });
@@ -598,32 +452,4 @@ ipcMain.handle('images:getBase64', async (_, imagePath: string) => {
   return getImageAsBase64(imagePath);
 });
 console.log('✅ IPC handlers registrados (completo)');
-}ipcMain.handle('cash:exportExcel', async (_, registerId: number) => {
-  const movements = cashRegisterRepository.getMovementsByRegister(registerId);
-  const summary = cashRegisterRepository.getClosingSummary(registerId);
-  const register = cashRegisterRepository.getById(registerId);
-  
-  if (!summary || !register) return null;
-  
-  const registerDate = new Date(register.openedAt).toLocaleDateString('es-AR').replace(/\//g, '-');
-  
-  const summaryExport = {
-    openingAmount: summary.cashFlow.opening,
-    salesCash: summary.cashFlow.salesCash,
-    income: summary.cashFlow.income,
-    expense: summary.cashFlow.expense,
-    expected: summary.cashFlow.expected,
-    salesDebit: summary.electronic.debit.total,
-    salesCredit: summary.electronic.credit.total,
-    salesTransfer: summary.electronic.transfer.total,
-  };
-  
-  return await generateCashRegisterExcel(movements, summaryExport, registerDate);
-});
-
-ipcMain.handle('reserve:exportExcel', async () => {
-  const movements = reserveFundRepository.getAll(500);
-  const summary = reserveFundRepository.getSummary();
-  
-  return await generateReserveExcel(movements, summary);
-});
+}

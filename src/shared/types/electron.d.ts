@@ -23,65 +23,31 @@ export interface Product {
   updatedAt: Date | null;
 }
 
-export interface CashRegister {
-  id: number;
-  openedAt: Date;
-  closedAt: Date | null;
-  openingAmount: number;
-  closingAmount: number | null;
-  expectedAmount: number | null;
-  difference: number | null;
-  status: "open" | "closed";
-  userId: number | null;
-  notes: string | null;
-}
+export type ExpenseType = "business" | "salary";
+export type ExpensePaymentMethod = "cash" | "transfer";
 
-export interface CashMovement {
+/** Un egreso: gasto del negocio o sueldo. Ya no depende de una caja abierta. */
+export interface Expense {
   id: number;
-  cashRegisterId: number;
-  type: "income" | "expense" | "sale";
+  type: ExpenseType;
   amount: number;
   concept: string;
   description: string | null;
-  createdAt: Date;
+  paymentMethod: ExpensePaymentMethod;
+  date: Date;
+  createdAt: Date | null;
 }
 
-export interface PaymentMethodSummary {
-  count: number;
+/** Totales de un período, separados por tipo para el reporte. */
+export interface ExpensesSummary {
   total: number;
+  business: number;
+  salary: number;
+  totalCash: number;
+  totalTransfer: number;
+  expenses: Expense[];
 }
 
-export interface SalesByPaymentMethod {
-  cash: PaymentMethodSummary;
-  debit: PaymentMethodSummary;
-  credit: PaymentMethodSummary;
-  transfer: PaymentMethodSummary;
-}
-
-export interface ClosingSummary {
-  register: CashRegister;
-  cashFlow: {
-    opening: number;
-    salesCash: number;
-    income: number;
-    expense: number;
-    expected: number;
-  };
-  electronic: {
-    debit: PaymentMethodSummary;
-    credit: PaymentMethodSummary;
-    transfer: PaymentMethodSummary;
-    total: number;
-  };
-  totalSales: number;
-  totalTransactions: number;
-  movements: {
-    totalIncome: number;
-    totalExpense: number;
-  };
-}
-
-// ==================== SALES ====================
 export interface SaleItem {
   id: number;
   saleId: number;
@@ -96,7 +62,7 @@ export interface SaleItem {
 export interface SalePayment {
   id: number;
   saleId: number;
-  paymentMethod: "cash" | "debit" | "credit" | "transfer";
+  paymentMethod: "cash" | "transfer";
   amount: number;
   createdAt: Date;
 }
@@ -104,13 +70,12 @@ export interface SalePayment {
 export interface Sale {
   id: number;
   customerId: number | null;
-  cashRegisterId: number | null;
   subtotal: number;
   tax: number;
  
   discount: number;
   total: number;
-  paymentMethod: "cash" | "debit" | "credit" | "transfer" | "mixed";
+  paymentMethod: "cash" | "transfer";
   status: "completed" | "suspended" | "cancelled";
   createdAt: Date;
   userId: number | null;
@@ -119,20 +84,18 @@ export interface Sale {
 }
 
 export interface PaymentDetail {
-  method: "cash" | "debit" | "credit" | "transfer";
+  method: "cash" | "transfer";
   amount: number;
 }
 
 export interface CreateSaleData {
   customerId?: number;
-  cashRegisterId?: number;
   subtotal: number;
   tax: number;
  
   discount: number;
   total: number;
-  paymentMethod: "cash" | "debit" | "credit" | "transfer";
-  payments?: PaymentDetail[];
+  paymentMethod: "cash" | "transfer";
   items: {
     productId: number;
     quantity: number;
@@ -157,34 +120,23 @@ export interface ElectronAPI {
     update: (id: number, data: Partial<Product>) => Promise<Product>;
     delete: (id: number) => Promise<{ success: boolean }>;
   };
-  cash: {
-    getOpen: () => Promise<CashRegister | null>;
-    open: (openingAmount: number, userId?: number) => Promise<CashRegister>;
-    close: (
-      id: number,
-      closingAmount: number,
-      notes?: string,
-    ) => Promise<CashRegister>;
-    getClosingSummary: (registerId: number) => Promise<ClosingSummary | null>;
-    getHistory: (limit?: number) => Promise<CashRegister[]>;
-    getMovements: (registerId: number) => Promise<CashMovement[]>;
-    addMovement: (data: {
-      cashRegisterId: number;
-      type: "income" | "expense";
+  expenses: {
+    getAll: (limit?: number) => Promise<Expense[]>;
+    getByDateRange: (startDate: string, endDate: string) => Promise<Expense[]>;
+    getSummary: (startDate: string, endDate: string) => Promise<ExpensesSummary>;
+    create: (data: {
+      type: ExpenseType;
       amount: number;
       concept: string;
-      description?: string;
-    }) => Promise<CashMovement>;
-    deleteMovement: (id: number) => Promise<boolean>;
-    getSalesByPaymentMethod: (
-      registerId: number,
-    ) => Promise<SalesByPaymentMethod>;
-    exportExcel: (registerId: number) => Promise<string | null>;
+      description?: string | null;
+      paymentMethod: ExpensePaymentMethod;
+      date?: string;
+    }) => Promise<Expense | null>;
+    delete: (id: number) => Promise<boolean>;
   };
   sales: {
     create: (data: CreateSaleData) => Promise<Sale>;
     getById: (id: number) => Promise<Sale | null>;
-    getByCashRegister: (cashRegisterId: number) => Promise<Sale[]>;
     getToday: () => Promise<Sale[]>;
     cancel: (id: number) => Promise<boolean>;
   };
@@ -237,39 +189,11 @@ export interface ElectronAPI {
     }>) => Promise<Supplier>;
     delete: (id: number) => Promise<boolean>;
   };
-    reserve: {
-    getBalance: () => Promise<number>;
-    getAll: (limit?: number) => Promise<ReserveMovement[]>;
-    getCategories: () => Promise<string[]>;
-    getSummary: () => Promise<ReserveSummary>;
-    getSummaryByCategory: () => Promise<ReserveCategorySummary[]>;
-    transferFromCash: (data: {
-      cashRegisterId: number;
-      amount: number;
-      concept: string;
-      category?: string;
-    }) => Promise<ReserveMovement>;
-    addExpense: (data: {
-      amount: number;
-      concept: string;
-      category?: string;
-      description?: string;
-    }) => Promise<ReserveMovement>;
-    addIncome: (data: {
-      amount: number;
-      concept: string;
-      category?: string;
-      description?: string;
-    }) => Promise<ReserveMovement>;
-    delete: (id: number) => Promise<boolean>;
-    exportExcel: () => Promise<string | null>;
-  };
-
-
   reports: {
     getSalesReport: (startDate: string, endDate: string) => Promise<SalesReportSummary>;
   getSalesForExport: (startDate: string, endDate: string) => Promise<any[]>;
   exportExcel: (startDate: string, endDate: string) => Promise<string>;
+    getExpensesReport: (startDate: string, endDate: string) => Promise<ExpensesSummary>;
   };
   dashboard: {
   getStats: () => Promise<DashboardStats>;
@@ -334,8 +258,6 @@ export interface SalesReportItem {
   totalTransactions: number;
   avgTicket: number;
   cash: number;
-  debit: number;
-  credit: number;
   transfer: number;
 }
 
@@ -353,8 +275,6 @@ export interface SalesReportSummary {
   avgTicket: number;
   byPaymentMethod: {
     cash: number;
-    debit: number;
-    credit: number;
     transfer: number;
   };
   topProducts: TopProductItem[];
@@ -394,8 +314,6 @@ export interface DashboardStats {
   salesGrowth: number;
   todayByPayment: {
     cash: number;
-    debit: number;
-    credit: number;
     transfer: number;
   };
   topProducts: {
@@ -410,12 +328,11 @@ export interface DashboardStats {
     stock: number;
     stockMin: number;
   }[];
-  cashRegister: {
-    isOpen: boolean;
-    openingAmount: number;
-    currentAmount: number;
-    salesCount: number;
-  } | null;
+  todayExpenses: {
+    total: number;
+    business: number;
+    salary: number;
+  };
   todayBirthdays: {
     id: number;
     fullName: string;

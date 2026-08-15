@@ -8,7 +8,7 @@ interface TicketItem {
   subtotal: number;
 }
 
-export type PaymentMethod = 'cash' | 'debit' | 'credit' | 'transfer';
+export type PaymentMethod = 'cash' | 'transfer';
 
 interface TicketData {
   saleId: number;
@@ -35,8 +35,6 @@ interface BusinessInfo {
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   cash: 'Efectivo',
-  debit: 'Débito',
-  credit: 'Crédito',
   transfer: 'Transferencia',
 };
 

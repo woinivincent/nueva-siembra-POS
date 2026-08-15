@@ -23,8 +23,6 @@ interface DashboardStats {
   salesGrowth: number;
   todayByPayment: {
     cash: number;
-    debit: number;
-    credit: number;
     transfer: number;
   };
   topProducts: {
@@ -39,12 +37,11 @@ interface DashboardStats {
     stock: number;
     stockMin: number;
   }[];
-  cashRegister: {
-    isOpen: boolean;
-    openingAmount: number;
-    currentAmount: number;
-    salesCount: number;
-  } | null;
+  todayExpenses: {
+    total: number;
+    business: number;
+    salary: number;
+  };
   todayBirthdays: {
     id: number;
     fullName: string;
@@ -214,27 +211,21 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Estado de caja */}
+        {/* Egresos del día */}
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-500">Caja</p>
-              {stats.cashRegister ? (
-                <>
-                  <p className="text-2xl font-bold text-green-600">{formatMoney(stats.cashRegister.currentAmount)}</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {stats.cashRegister.salesCount} ventas
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-lg font-bold text-gray-400">Cerrada</p>
-                  <p className="text-sm text-gray-400 mt-1">Sin caja abierta</p>
-                </>
-              )}
+              <p className="text-sm text-gray-500">Egresos de hoy</p>
+              <p className="text-2xl font-bold text-red-600">
+                {formatMoney(stats.todayExpenses?.total || 0)}
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                Negocio {formatMoney(stats.todayExpenses?.business || 0)} · Sueldo{' '}
+                {formatMoney(stats.todayExpenses?.salary || 0)}
+              </p>
             </div>
-            <div className={`p-3 rounded-lg ${stats.cashRegister ? 'bg-green-100' : 'bg-gray-100'}`}>
-              <Wallet className={`w-6 h-6 ${stats.cashRegister ? 'text-green-600' : 'text-gray-400'}`} />
+            <div className="p-3 rounded-lg bg-red-100">
+              <Wallet className="w-6 h-6 text-red-600" />
             </div>
           </div>
         </div>
@@ -258,20 +249,6 @@ export function Dashboard() {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-blue-600" />
-                <span className="text-gray-600">Débito</span>
-              </div>
-              <span className="font-semibold  text-green-600">{formatMoney(stats.todayByPayment.debit)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-purple-600" />
-                <span className="text-gray-600">Crédito</span>
-              </div>
-              <span className="font-semibold  text-green-600">{formatMoney(stats.todayByPayment.credit)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-orange-600" />
                 <span className="text-gray-600">Transferencia</span>
               </div>
@@ -287,20 +264,6 @@ export function Dashboard() {
                   className="bg-green-500" 
                   style={{ width: `${(stats.todayByPayment.cash / stats.todaySales) * 100}%` }}
                   title={`Efectivo: ${formatMoney(stats.todayByPayment.cash)}`}
-                />
-              )}
-              {stats.todayByPayment.debit > 0 && (
-                <div 
-                  className="bg-blue-500" 
-                  style={{ width: `${(stats.todayByPayment.debit / stats.todaySales) * 100}%` }}
-                  title={`Débito: ${formatMoney(stats.todayByPayment.debit)}`}
-                />
-              )}
-              {stats.todayByPayment.credit > 0 && (
-                <div 
-                  className="bg-purple-500" 
-                  style={{ width: `${(stats.todayByPayment.credit / stats.todaySales) * 100}%` }}
-                  title={`Crédito: ${formatMoney(stats.todayByPayment.credit)}`}
                 />
               )}
               {stats.todayByPayment.transfer > 0 && (

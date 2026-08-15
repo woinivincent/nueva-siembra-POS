@@ -10,7 +10,6 @@ import {
   Wallet,
   BarChart3,
   Settings,
-  Vault,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -22,8 +21,7 @@ const menuItems = [
   { icon: Package, label: "Inventario", path: "/inventory" },
   { icon: Users, label: "Clientes", path: "/customers" },
   { icon: Truck, label: "Proveedores", path: "/suppliers" },
-  { icon: Wallet, label: "Caja", path: "/cash-register" },
-  { icon: Vault, label: "Caja Reserva", path: "/reserve" },
+  { icon: Wallet, label: "Egresos", path: "/expenses" },
   { icon: BarChart3, label: "Reportes", path: "/reports" },
   { icon: Settings, label: "Configuración", path: "/settings" },
 ];

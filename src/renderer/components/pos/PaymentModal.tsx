@@ -2,12 +2,10 @@
 import { useState, useEffect } from "react";
 import {
   Banknote,
-  CreditCard,
   ArrowLeftRight,
   CheckCircle,
   Printer,
   Download,
-  Split,
   User,
   CreditCard as PaymentIcon,
 } from "lucide-react";
@@ -36,8 +34,6 @@ const paymentMethods: {
   color: string;
 }[] = [
   { id: "cash", label: "Efectivo", icon: Banknote, color: "bg-green-500" },
-  { id: "debit", label: "Débito", icon: CreditCard, color: "bg-blue-500" },
-  { id: "credit", label: "Crédito", icon: CreditCard, color: "bg-purple-500" },
   { id: "transfer", label: "Transferencia", icon: ArrowLeftRight, color: "bg-orange-500" },
 ];
 
@@ -64,11 +60,6 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const [cashReceived, setCashReceived] = useState("");
 
   // Pago mixto
-  const [isMixedPayment, setIsMixedPayment] = useState(false);
-  const [mixedMethod1, setMixedMethod1] = useState<PaymentMethod>("cash");
-  const [mixedAmount1, setMixedAmount1] = useState("");
-  const [mixedMethod2, setMixedMethod2] = useState<PaymentMethod>("debit");
-  const [mixedAmount2, setMixedAmount2] = useState("");
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [saleCompleted, setSaleCompleted] = useState(false);
@@ -87,11 +78,6 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
 
       setSelectedMethod("cash");
       setCashReceived("");
-      setIsMixedPayment(false);
-      setMixedMethod1("cash");
-      setMixedAmount1("");
-      setMixedMethod2("debit");
-      setMixedAmount2("");
       setSaleCompleted(false);
       setCompletedSaleId(null);
       setError(null);
@@ -127,34 +113,15 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
   const cashReceivedNum = parseFloat(cashReceived) || 0;
   const change = cashReceivedNum - total;
 
-  // Cálculos pago mixto
-  const mixedAmount1Num = parseFloat(mixedAmount1) || 0;
-  const mixedAmount2Num = parseFloat(mixedAmount2) || 0;
-  const mixedTotal = mixedAmount1Num + mixedAmount2Num;
-  const mixedRemaining = total - mixedTotal;
-
   const formatMoney = (amount: number) =>
     new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency: "ARS",
     }).format(amount);
 
-  // Validaciones
-  const canCompleteSimple =
+  // Sólo el pago en efectivo exige que lo recibido cubra el total
+  const canComplete =
     selectedMethod !== "cash" || (cashReceivedNum >= total && total > 0);
-
-  const canCompleteMixed =
-    Math.abs(mixedRemaining) < 0.01 &&
-    (mixedAmount1Num > 0 || mixedAmount2Num > 0);
-
-  const canComplete = isMixedPayment ? canCompleteMixed : canCompleteSimple;
-
-  const handleAutoFillRemaining = () => {
-    const remaining = total - mixedAmount1Num;
-    if (remaining > 0) {
-      setMixedAmount2(remaining.toFixed(2));
-    }
-  };
 
   const handleComplete = async () => {
     if (!canComplete || items.length === 0) return;
@@ -163,34 +130,13 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
     setError(null);
 
     try {
-      const cashRegister = await window.electronAPI.cash.getOpen();
-      if (!cashRegister) {
-        setError("No hay caja abierta. Abrí la caja antes de realizar ventas.");
-        setIsProcessing(false);
-        return;
-      }
-
-      let primaryPaymentMethod: PaymentMethod;
-      if (isMixedPayment) {
-        primaryPaymentMethod = mixedAmount1Num >= mixedAmount2Num ? mixedMethod1 : mixedMethod2;
-      } else {
-        primaryPaymentMethod = selectedMethod;
-      }
-
       const saleData = {
         customerId: selectedCustomer?.id,
-        cashRegisterId: cashRegister.id,
         subtotal,
         tax: 0,
         discount,
         total,
-        paymentMethod: primaryPaymentMethod,
-        payments: isMixedPayment
-          ? [
-              { method: mixedMethod1, amount: mixedAmount1Num },
-              { method: mixedMethod2, amount: mixedAmount2Num },
-            ].filter((p) => p.amount > 0)
-          : undefined,
+        paymentMethod: selectedMethod,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -321,19 +267,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                   </p>
                 )}
 
-                {isMixedPayment && (
-                  <div className="mt-2 p-2 bg-gray-50 rounded-lg text-xs">
-                    <p className="font-medium text-gray-700">Pago dividido:</p>
-                    <p className="text-gray-600">
-                      {paymentMethods.find((m) => m.id === mixedMethod1)?.label}: {formatMoney(mixedAmount1Num)}
-                    </p>
-                    <p className="text-gray-600">
-                      {paymentMethods.find((m) => m.id === mixedMethod2)?.label}: {formatMoney(mixedAmount2Num)}
-                    </p>
-                  </div>
-                )}
-
-                {!isMixedPayment && selectedMethod === "cash" && change > 0 && (
+                {selectedMethod === "cash" && change > 0 && (
                   <div className="mt-3 p-2 bg-yellow-50 rounded-lg">
                     <p className="text-xs text-yellow-700">Cambio a entregar:</p>
                     <p className="text-lg font-bold text-yellow-700">{formatMoney(change)}</p>
@@ -406,26 +340,6 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
               {activeTab === "payment" ? (
                 /* TAB PAGO */
                 <div className="space-y-4">
-                  {/* Toggle pago mixto */}
-                  <div className="flex justify-center">
-                    <button
-                      type="button"
-                      onClick={() => setIsMixedPayment(!isMixedPayment)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border-2 transition-all text-sm ${
-                        isMixedPayment
-                          ? "border-purple-500 bg-purple-50 text-purple-700"
-                          : "border-gray-200 hover:border-gray-300 text-gray-600"
-                      }`}
-                    >
-                      <Split className="w-4 h-4" />
-                      <span className="font-medium">
-                        {isMixedPayment ? "Pago dividido" : "Dividir pago"}
-                      </span>
-                    </button>
-                  </div>
-
-                  {!isMixedPayment ? (
-                    <>
                       {/* Métodos de pago simple */}
                       <div className="grid grid-cols-4 gap-2">
                         {paymentMethods.map((method) => {
@@ -499,112 +413,6 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                           </div>
                         </div>
                       )}
-                    </>
-                  ) : (
-                    /* PAGO MIXTO */
-                    <div className="space-y-3">
-                      {/* Pago 1 */}
-                      <div className="p-2 border rounded-lg space-y-2">
-                        <span className="text-xs font-medium text-gray-700">Pago 1</span>
-                        <div className="grid grid-cols-4 gap-1">
-                          {paymentMethods.map((method) => {
-                            const Icon = method.icon;
-                            return (
-                              <button
-                                key={method.id}
-                                type="button"
-                                onClick={() => setMixedMethod1(method.id)}
-                                className={`p-1.5 rounded flex flex-col items-center gap-0.5 ${
-                                  mixedMethod1 === method.id
-                                    ? `${method.color} text-white`
-                                    : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-                                }`}
-                              >
-                                <Icon className="w-4 h-4" />
-                                <span className="text-[10px]">{method.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
-                          <input
-                            type="number"
-                            value={mixedAmount1}
-                            onChange={(e) => setMixedAmount1(e.target.value)}
-                            placeholder="0.00"
-                            className="w-full pl-7 pr-3 py-1.5 border border-gray-300 rounded-lg text-base font-semibold text-gray-900 bg-white"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Pago 2 */}
-                      <div className="p-2 border rounded-lg space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-medium text-gray-700">Pago 2</span>
-                          <button
-                            type="button"
-                            onClick={handleAutoFillRemaining}
-                            className="text-[10px] text-purple-600 hover:text-purple-700"
-                          >
-                            Completar restante
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-4 gap-1">
-                          {paymentMethods.map((method) => {
-                            const Icon = method.icon;
-                            return (
-                              <button
-                                key={method.id}
-                                type="button"
-                                onClick={() => setMixedMethod2(method.id)}
-                                className={`p-1.5 rounded flex flex-col items-center gap-0.5 ${
-                                  mixedMethod2 === method.id
-                                    ? `${method.color} text-white`
-                                    : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-                                }`}
-                              >
-                                <Icon className="w-4 h-4" />
-                                <span className="text-[10px]">{method.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
-                          <input
-                            type="number"
-                            value={mixedAmount2}
-                            onChange={(e) => setMixedAmount2(e.target.value)}
-                            placeholder="0.00"
-                            className="w-full pl-7 pr-3 py-1.5 border border-gray-300 rounded-lg text-base font-semibold text-gray-900 bg-white"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Resumen */}
-                      <div
-                        className={`p-2 rounded-lg text-xs ${
-                          Math.abs(mixedRemaining) < 0.01
-                            ? "bg-green-50 text-green-700"
-                            : mixedRemaining > 0
-                            ? "bg-yellow-50 text-yellow-700"
-                            : "bg-red-50 text-red-700"
-                        }`}
-                      >
-                        <div className="flex justify-between">
-                          <span>Total ingresado:</span>
-                          <span className="font-semibold">{formatMoney(mixedTotal)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>{Math.abs(mixedRemaining) < 0.01 ? "✓ Completo" : mixedRemaining > 0 ? "Falta:" : "Excede:"}</span>
-                          <span className="font-bold">
-                            {Math.abs(mixedRemaining) < 0.01 ? "" : formatMoney(Math.abs(mixedRemaining))}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 /* TAB CLIENTE */

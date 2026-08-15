@@ -55,8 +55,6 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
   const getPaymentMethodLabel = (method: string) => {
     const labels: Record<string, { label: string; color: string }> = {
       cash: { label: 'Efectivo', color: 'bg-green-100 text-green-700' },
-      debit: { label: 'Débito', color: 'bg-blue-100 text-blue-700' },
-      credit: { label: 'Crédito', color: 'bg-purple-100 text-purple-700' },
       transfer: { label: 'Transferencia', color: 'bg-orange-100 text-orange-700' },
       mixed: { label: 'Pago dividido', color: 'bg-gray-100 text-gray-700' },
     };

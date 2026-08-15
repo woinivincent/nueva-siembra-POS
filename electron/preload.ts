@@ -2,6 +2,29 @@
 const { contextBridge, ipcRenderer } = require('electron') as typeof import('electron');
 
 // ==================== INTERFACES ====================
+type ExpenseType = "business" | "salary";
+type ExpensePaymentMethod = "cash" | "transfer";
+
+interface Expense {
+  id: number;
+  type: ExpenseType;
+  amount: number;
+  concept: string;
+  description: string | null;
+  paymentMethod: ExpensePaymentMethod;
+  date: Date;
+  createdAt: Date | null;
+}
+
+interface ExpensesSummary {
+  total: number;
+  business: number;
+  salary: number;
+  totalCash: number;
+  totalTransfer: number;
+  expenses: Expense[];
+}
+
 interface Product {
   id: number;
   name: string;
@@ -25,64 +48,9 @@ interface Product {
   updatedAt: Date | null;
 }
 
-interface CashRegister {
-  id: number;
-  openedAt: Date;
-  closedAt: Date | null;
-  openingAmount: number;
-  closingAmount: number | null;
-  expectedAmount: number | null;
-  difference: number | null;
-  status: "open" | "closed";
-  userId: number | null;
-  notes: string | null;
-}
 
-interface CashMovement {
-  id: number;
-  cashRegisterId: number;
-  type: "income" | "expense" | "sale";
-  amount: number;
-  concept: string;
-  description: string | null;
-  paymentMethod: "cash" | "transfer";
-  createdAt: Date;
-}
 
-interface PaymentMethodSummary {
-  count: number;
-  total: number;
-}
 
-interface SalesByPaymentMethod {
-  cash: PaymentMethodSummary;
-  debit: PaymentMethodSummary;
-  credit: PaymentMethodSummary;
-  transfer: PaymentMethodSummary;
-}
-
-interface ClosingSummary {
-  register: CashRegister;
-  cashFlow: {
-    opening: number;
-    salesCash: number;
-    income: number;
-    expense: number;
-    expected: number;
-  };
-  electronic: {
-    debit: PaymentMethodSummary;
-    credit: PaymentMethodSummary;
-    transfer: PaymentMethodSummary;
-    total: number;
-  };
-  totalSales: number;
-  totalTransactions: number;
-  movements: {
-    totalIncome: number;
-    totalExpense: number;
-  };
-}
 
 // ==================== API ====================
 const electronAPI = {
@@ -111,52 +79,34 @@ const electronAPI = {
       ipcRenderer.invoke("products:delete", id),
   },
 
-  // Cash Register
-  cash: {
-    getOpen: (): Promise<CashRegister | null> =>
-      ipcRenderer.invoke("cash:getOpen"),
-    open: (openingAmount: number, userId?: number): Promise<CashRegister> =>
-      ipcRenderer.invoke("cash:open", openingAmount, userId),
-    close: (
-      id: number,
-      closingAmount: number,
-      notes?: string
-    ): Promise<CashRegister> =>
-      ipcRenderer.invoke("cash:close", id, closingAmount, notes),
-    getClosingSummary: (registerId: number): Promise<ClosingSummary | null> =>
-      ipcRenderer.invoke("cash:getClosingSummary", registerId),
-    getHistory: (limit?: number): Promise<CashRegister[]> =>
-      ipcRenderer.invoke("cash:getHistory", limit),
-    getMovements: (registerId: number): Promise<CashMovement[]> =>
-      ipcRenderer.invoke("cash:getMovements", registerId),
-    addMovement: (data: {
-      cashRegisterId: number;
-      type: "income" | "expense";
+  // Egresos
+  expenses: {
+    getAll: (limit?: number): Promise<Expense[]> =>
+      ipcRenderer.invoke("expenses:getAll", limit),
+    getByDateRange: (startDate: string, endDate: string): Promise<Expense[]> =>
+      ipcRenderer.invoke("expenses:getByDateRange", startDate, endDate),
+    getSummary: (startDate: string, endDate: string): Promise<ExpensesSummary> =>
+      ipcRenderer.invoke("expenses:getSummary", startDate, endDate),
+    create: (data: {
+      type: ExpenseType;
       amount: number;
       concept: string;
-      description?: string;
-      paymentMethod?: "cash" | "transfer";
-    }): Promise<CashMovement> => ipcRenderer.invoke("cash:addMovement", data),
-    deleteMovement: (id: number): Promise<boolean> =>
-      ipcRenderer.invoke("cash:deleteMovement", id),
-    getSalesByPaymentMethod: (
-      registerId: number
-    ): Promise<SalesByPaymentMethod> =>
-      ipcRenderer.invoke("cash:getSalesByPaymentMethod", registerId),
-      exportExcel: (registerId: number) => ipcRenderer.invoke('cash:exportExcel', registerId),
+      description?: string | null;
+      paymentMethod: ExpensePaymentMethod;
+      date?: string;
+    }): Promise<Expense | null> => ipcRenderer.invoke("expenses:create", data),
+    delete: (id: number): Promise<boolean> =>
+      ipcRenderer.invoke("expenses:delete", id),
   },
 
-  // Sales
   sales: {
     create: (data: {
       customerId?: number;
-      cashRegisterId?: number;
       subtotal: number;
       tax: number;
       discount: number;
       total: number;
-      paymentMethod: "cash" | "debit" | "credit" | "transfer";
-      payments?: { method: "cash" | "debit" | "credit" | "transfer"; amount: number }[];
+      paymentMethod: "cash" | "transfer";
       items: {
         productId: number;
         quantity: number;
@@ -167,8 +117,6 @@ const electronAPI = {
     }): Promise<any> => ipcRenderer.invoke("sales:create", data),
     getById: (id: number): Promise<any> =>
       ipcRenderer.invoke("sales:getById", id),
-    getByCashRegister: (cashRegisterId: number): Promise<any> =>
-      ipcRenderer.invoke("sales:getByCashRegister", cashRegisterId),
     getToday: (): Promise<any> => ipcRenderer.invoke("sales:getToday"),
     cancel: (id: number): Promise<boolean> =>
       ipcRenderer.invoke("sales:cancel", id),
@@ -221,25 +169,9 @@ const electronAPI = {
     getSalesForExport: (startDate: string, endDate: string): Promise<any[]> =>
       ipcRenderer.invoke("reports:getSalesForExport", startDate, endDate),
     exportExcel: (startDate: string, endDate: string) => ipcRenderer.invoke('reports:exportExcel', startDate, endDate),
-    getExpensesReport: (startDate: string, endDate: string): Promise<any> =>
+    getExpensesReport: (startDate: string, endDate: string): Promise<ExpensesSummary> =>
       ipcRenderer.invoke("reports:getExpensesReport", startDate, endDate),
   },
-  // Reserve Fund (Caja Reserva)
-reserve: {
-  getBalance: (): Promise<number> => ipcRenderer.invoke('reserve:getBalance'),
-  getAll: (limit?: number): Promise<any[]> => ipcRenderer.invoke('reserve:getAll', limit),
-  getCategories: (): Promise<string[]> => ipcRenderer.invoke('reserve:getCategories'),
-  getSummary: (): Promise<any> => ipcRenderer.invoke('reserve:getSummary'),
-  getSummaryByCategory: (): Promise<any[]> => ipcRenderer.invoke('reserve:getSummaryByCategory'),
-  transferFromCash: (data: { cashRegisterId: number; amount: number; concept: string; category?: string }): Promise<any> =>
-    ipcRenderer.invoke('reserve:transferFromCash', data),
-  addExpense: (data: { amount: number; concept: string; category?: string; description?: string }): Promise<any> =>
-    ipcRenderer.invoke('reserve:addExpense', data),
-  addIncome: (data: { amount: number; concept: string; category?: string; description?: string }): Promise<any> =>
-    ipcRenderer.invoke('reserve:addIncome', data),
-  delete: (id: number): Promise<boolean> => ipcRenderer.invoke('reserve:delete', id),
-  exportExcel: () => ipcRenderer.invoke('reserve:exportExcel'),
-},
 dashboard: {
   getStats: (): Promise<any> => ipcRenderer.invoke('dashboard:getStats'),
 },
