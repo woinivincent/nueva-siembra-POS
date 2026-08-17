@@ -94,6 +94,18 @@
   }
 }
 
+@layer utilities {
+  /* Oculta la barra de scroll pero deja el desplazamiento intacto: se sigue
+     pudiendo scrollear con la rueda, el teclado o el gesto del touchpad. */
+  .sin-scrollbar {
+    scrollbar-width: none;      /* Firefox */
+    -ms-overflow-style: none;   /* Edge antiguo */
+  }
+  .sin-scrollbar::-webkit-scrollbar {
+    display: none;              /* Chromium, que es el motor de Electron */
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

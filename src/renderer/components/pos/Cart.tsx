@@ -209,7 +209,7 @@ export function Cart({ onCheckout }: CartProps) {
 
         </CardHeader>
 
-        <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
+        <CardContent className="flex-1 overflow-y-auto sin-scrollbar p-4 space-y-3">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <ShoppingCart className="w-16 h-16 text-muted-foreground/50 mb-4" />

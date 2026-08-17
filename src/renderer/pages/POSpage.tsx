@@ -64,7 +64,7 @@ export function POSPage() {
       </div>
 
         {/* Grid de Productos */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto sin-scrollbar p-6">
           <ProductGrid
             searchTerm={searchTerm}
             selectedCategory={selectedCategory}
