@@ -193,13 +193,13 @@ export function Sales() {
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             <Banknote className="w-3 h-3" /> Efectivo
           </p>
-          <p className="text-2xl font-bold text-green-500">{formatMoney(totalCash)}</p>
+          <p className="text-2xl font-bold text-brand-green">{formatMoney(totalCash)}</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             <ArrowLeftRight className="w-3 h-3" /> Transferencia
           </p>
-          <p className="text-2xl font-bold text-orange-400">{formatMoney(totalTransfer)}</p>
+          <p className="text-2xl font-bold text-brand-orange">{formatMoney(totalTransfer)}</p>
         </div>
       </div>
 
@@ -257,8 +257,8 @@ export function Sales() {
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                           sale.paymentMethod === 'cash'
-                            ? 'bg-green-500/15 text-green-500'
-                            : 'bg-orange-500/15 text-orange-400'
+                            ? 'bg-brand-green/20 text-brand-dark'
+                            : 'bg-brand-orange/20 text-brand-orange'
                         }`}
                       >
                         {sale.paymentMethod === 'cash' ? (

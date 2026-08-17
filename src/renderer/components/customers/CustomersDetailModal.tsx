@@ -86,7 +86,7 @@ export function CustomerDetailModal({ isOpen, onClose, customer }: Props) {
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-brand-dark text-white">
             <div>
               <h2 className="text-xl font-bold">{customer.fullName}</h2>
               {customer.occupation && (

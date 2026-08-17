@@ -100,7 +100,7 @@ export function Customers() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Clientes</h1>
+          <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
           <p className="text-gray-500">{customers.length} clientes registrados</p>
         </div>
         

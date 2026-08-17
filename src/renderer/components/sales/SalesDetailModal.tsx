@@ -64,13 +64,13 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-green-500 to-green-600 text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-brand-green text-brand-dark">
           <div className="flex items-center gap-3">
             <ShoppingBag className="w-6 h-6" />
             <div>
               <h2 className="text-xl font-bold">Venta #{saleId}</h2>
               {sale && (
-                <p className="text-green-100 text-sm flex items-center gap-1">
+                <p className="text-brand-dark/70 text-sm flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {formatDateTime(sale.createdAt)}
                 </p>
@@ -79,7 +79,7 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            className="p-2 hover:bg-black/10 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -89,7 +89,7 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-green"></div>
             </div>
           ) : sale ? (
             <div className="space-y-6">
@@ -170,7 +170,7 @@ export function SaleDetailModal({ isOpen, onClose, saleId }: Props) {
                 
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
                   <span className="text-gray-900">Total</span>
-                  <span className="text-green-600">{formatMoney(sale.total)}</span>
+                  <span className="text-brand-dark">{formatMoney(sale.total)}</span>
                 </div>
               </div>
             </div>

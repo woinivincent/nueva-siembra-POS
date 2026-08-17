@@ -83,9 +83,11 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
     }
   };
 
+  // Negocio en naranja, sueldo en amarillo: los dos son colores de marca y se
+  // distinguen bien entre sí.
   const accent = isSalary
-    ? { text: 'text-purple-600', bg: 'bg-purple-500/15', ring: 'focus:ring-purple-500' }
-    : { text: 'text-blue-600', bg: 'bg-blue-500/15', ring: 'focus:ring-blue-500' };
+    ? { text: 'text-brand-dark', bg: 'bg-brand-yellow/30', ring: 'focus:ring-brand-yellow' }
+    : { text: 'text-brand-orange', bg: 'bg-brand-orange/20', ring: 'focus:ring-brand-orange' };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -219,7 +221,9 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
               type="submit"
               disabled={isLoading}
               className={`flex-1 py-2 rounded-lg font-medium text-white disabled:opacity-50 ${
-                isSalary ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'
+                isSalary
+                  ? 'bg-brand-yellow text-brand-dark hover:opacity-90'
+                  : 'bg-brand-orange hover:opacity-90'
               }`}
             >
               {isLoading ? 'Guardando…' : 'Registrar egreso'}

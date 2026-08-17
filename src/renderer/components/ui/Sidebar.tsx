@@ -45,25 +45,25 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        "h-screen bg-card border-r border-border flex flex-col transition-all duration-300 ease-in-out relative z-20",
+        "h-screen bg-brand-dark text-white border-r border-black/20 flex flex-col transition-all duration-300 ease-in-out relative z-20",
         isExpanded ? "w-64" : "w-16"
       )}
     >
       {/* Header */}
       <div className={cn(
-        "border-b border-border transition-all duration-300",
+        "border-b border-white/10 transition-all duration-300",
         isExpanded ? "p-6" : "p-4"
       )}>
         {isExpanded ? (
           <>
-            <h1 className="text-2xl font-bold text-primary whitespace-nowrap">Nueva Siembra</h1>
-            <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">
+            <h1 className="text-2xl font-bold text-brand-green whitespace-nowrap">Nueva Siembra</h1>
+            <p className="text-xs text-white/60 mt-1 whitespace-nowrap">
               Punto de Venta
             </p>
           </>
         ) : (
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center mx-auto">
-            <span className="text-sm font-bold text-primary-foreground">NS</span>
+          <div className="w-8 h-8 rounded-lg bg-brand-green flex items-center justify-center mx-auto">
+            <span className="text-sm font-bold text-brand-dark">NS</span>
           </div>
         )}
       </div>
@@ -72,17 +72,17 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <button
         onClick={onToggle}
         className={cn(
-          "absolute top-20 -right-3 w-6 h-6 bg-card border border-border rounded-full flex items-center justify-center",
-          "hover:bg-accent transition-colors shadow-sm",
+          "absolute top-20 -right-3 w-6 h-6 bg-brand-dark border border-white/20 rounded-full flex items-center justify-center",
+          "hover:bg-white/10 transition-colors shadow-sm",
           "opacity-0 group-hover:opacity-100",
           isHovered && "opacity-100"
         )}
         title={collapsed ? "Fijar sidebar" : "Colapsar sidebar"}
       >
         {collapsed ? (
-          <ChevronRight className="w-3 h-3 text-muted-foreground" />
+          <ChevronRight className="w-3 h-3 text-white/70" />
         ) : (
-          <ChevronLeft className="w-3 h-3 text-muted-foreground" />
+          <ChevronLeft className="w-3 h-3 text-white/70" />
         )}
       </button>
 
@@ -101,8 +101,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 "flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200",
                 isExpanded ? "px-4 py-3" : "px-3 py-3 justify-center",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-brand-green text-brand-dark"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
               )}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -116,20 +116,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Footer */}
       <div className={cn(
-        "border-t border-border transition-all duration-300",
+        "border-t border-white/10 transition-all duration-300",
         isExpanded ? "p-4" : "p-2"
       )}>
         <div className={cn(
           "flex items-center gap-3 rounded-lg",
           isExpanded ? "px-4 py-2" : "justify-center py-2"
         )}>
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-semibold text-primary">A</span>
+          <div className="w-8 h-8 rounded-full bg-brand-green/25 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-semibold text-brand-green">A</span>
           </div>
           {isExpanded && (
             <div className="flex-1 overflow-hidden">
               <p className="text-sm font-medium whitespace-nowrap">Admin</p>
-              <p className="text-xs text-muted-foreground whitespace-nowrap">Administrador</p>
+              <p className="text-xs text-white/60 whitespace-nowrap">Administrador</p>
             </div>
           )}
         </div>

@@ -226,8 +226,8 @@ export function Cart({ onCheckout }: CartProps) {
                     key={block.groupId}
                     className={`rounded-lg border-2 p-2 space-y-2 ${
                       block.complete
-                        ? "border-primary/40 bg-primary/5"
-                        : "border-amber-500/60 bg-amber-500/10"
+                        ? "border-brand-green bg-brand-green/10"
+                        : "border-brand-yellow bg-brand-yellow/15"
                     }`}
                   >
                     <div className="flex items-center justify-between px-1">
@@ -236,7 +236,7 @@ export function Cart({ onCheckout }: CartProps) {
                       </span>
                       <span
                         className={`text-xs font-medium ${
-                          block.complete ? "text-primary" : "text-amber-400"
+                          block.complete ? "text-brand-green" : "text-brand-orange"
                         }`}
                       >
                         {block.complete
@@ -332,7 +332,7 @@ export function Cart({ onCheckout }: CartProps) {
                       min={0}
                       max={tempDiscountType === "percentage" ? 100 : undefined}
                       step={tempDiscountType === "percentage" ? 1 : 0.01}
-                      className={`w-full h-10 rounded-md text-white border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring  ${
+                      className={`w-full h-10 rounded-md text-foreground border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring  ${
                         tempDiscountType === "percentage" ? "pr-10" : "pl-10"
                       }`}
                     />

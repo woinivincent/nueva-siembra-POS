@@ -18,6 +18,14 @@ module.exports = {
         '4xl': ['2.5rem', { lineHeight: '2.75rem' }],  // 36px -> 40px
       },
       colors: {
+        // Colores de marca, para cuando hace falta el color puntual y no el rol
+        brand: {
+          green: 'hsl(var(--brand-green))',
+          orange: 'hsl(var(--brand-orange))',
+          yellow: 'hsl(var(--brand-yellow))',
+          red: 'hsl(var(--brand-red))',
+          dark: 'hsl(var(--brand-dark))',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

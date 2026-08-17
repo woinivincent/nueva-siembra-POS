@@ -2,50 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Paleta de marca Nueva Siembra
+  --------------------------------------------------
+  Principales : verde   #aabd7d   naranja #f79200
+  Secundarios : amarillo #ffc003  rojo    #ea3239
+  Base        : #1d262d (el negro del logo)
+
+  Los valores se guardan como HSL sin la función hsl() porque así los consume
+  Tailwind y permite aplicarles opacidad (bg-primary/10, por ejemplo).
+*/
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Colores de marca, disponibles en toda la app */
+    --brand-green: 78 33% 62%;
+    --brand-orange: 35 100% 48%;
+    --brand-yellow: 45 100% 51%;
+    --brand-red: 358 81% 56%;
+    --brand-dark: 206 22% 15%;
+
+    /* Modo claro: es el que usa la app por defecto */
+    --background: 40 20% 98%;
+    --foreground: 206 22% 15%;
+
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 206 22% 15%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 142 76% 36%;
+    --popover-foreground: 206 22% 15%;
+
+    /* El verde es la acción principal. Lleva texto oscuro porque es un verde
+       claro y el blanco encima no se leería bien. */
+    --primary: 78 33% 62%;
+    --primary-foreground: 206 22% 15%;
+
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 206 22% 15%;
+
+    --muted: 40 20% 94%;
+    --muted-foreground: 206 12% 42%;
+
+    --accent: 40 25% 91%;
+    --accent-foreground: 206 22% 15%;
+
+    --destructive: 358 81% 56%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 206 12% 87%;
+    --input: 206 12% 87%;
+    --ring: 78 33% 62%;
+
     --radius: 0.5rem;
   }
 
+  /* Modo oscuro: se conserva por si se activa, con la misma marca */
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 142 76% 36%;
+    --background: 206 22% 11%;
+    --foreground: 40 20% 96%;
+
+    --card: 206 22% 15%;
+    --card-foreground: 40 20% 96%;
+
+    --popover: 206 22% 15%;
+    --popover-foreground: 40 20% 96%;
+
+    --primary: 78 33% 62%;
+    --primary-foreground: 206 22% 11%;
+
+    --secondary: 206 18% 20%;
+    --secondary-foreground: 40 20% 96%;
+
+    --muted: 206 18% 20%;
+    --muted-foreground: 206 10% 65%;
+
+    --accent: 206 18% 24%;
+    --accent-foreground: 40 20% 96%;
+
+    --destructive: 358 70% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 206 15% 25%;
+    --input: 206 15% 25%;
+    --ring: 78 33% 62%;
   }
 }
 

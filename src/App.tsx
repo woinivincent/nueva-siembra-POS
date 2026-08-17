@@ -15,7 +15,7 @@ import "./index.css";
 function App() {
   return (
     <HashRouter>
-      <div className="dark">
+      <div>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />

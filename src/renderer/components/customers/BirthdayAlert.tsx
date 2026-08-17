@@ -13,7 +13,7 @@ export function BirthdayAlert({ customers }: Props) {
   if (dismissed || customers.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-xl shadow-lg p-4 text-white relative overflow-hidden">
+    <div className="bg-gradient-to-r from-brand-orange to-brand-yellow rounded-xl shadow-lg p-4 text-white relative overflow-hidden">
       {/* Decoración de fondo */}
       <div className="absolute top-0 right-0 opacity-10">
         <Cake className="w-32 h-32 -mt-8 -mr-8" />

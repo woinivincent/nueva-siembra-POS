@@ -111,7 +111,7 @@ export function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">📊 Dashboard</h1>
+          <h1 className="text-2xl font-bold text-foreground">📊 Dashboard</h1>
           <p className="text-gray-500">
             Resumen del día • Actualizado {lastUpdate.toLocaleTimeString('es-AR')}
           </p>
@@ -127,7 +127,7 @@ export function Dashboard() {
 
       {/* Alerta de cumpleaños */}
       {stats.todayBirthdays.length > 0 && (
-        <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 rounded-xl shadow-lg p-4 text-white">
+        <div className="bg-gradient-to-r from-brand-orange to-brand-yellow rounded-xl shadow-lg p-4 text-white">
           <div className="flex items-center gap-3">
             <div className="bg-white/20 rounded-full p-2">
               <Cake className="w-6 h-6" />

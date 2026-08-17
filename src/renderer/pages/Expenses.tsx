@@ -68,10 +68,10 @@ export function Expenses() {
         <button
           type="button"
           onClick={() => setFormType('business')}
-          className="flex items-center gap-4 rounded-xl border-2 border-blue-500/40 bg-blue-500/5 p-5 text-left hover:bg-blue-500/10 transition-colors"
+          className="flex items-center gap-4 rounded-xl border-2 border-brand-orange/50 bg-brand-orange/5 p-5 text-left hover:bg-brand-orange/10 transition-colors"
         >
-          <div className="w-12 h-12 rounded-full bg-blue-500/15 flex items-center justify-center flex-shrink-0">
-            <Briefcase className="w-6 h-6 text-blue-600" />
+          <div className="w-12 h-12 rounded-full bg-brand-orange/20 flex items-center justify-center flex-shrink-0">
+            <Briefcase className="w-6 h-6 text-brand-orange" />
           </div>
           <div className="flex-1">
             <p className="font-semibold flex items-center gap-2">
@@ -81,7 +81,7 @@ export function Expenses() {
               Proveedores, insumos, servicios
             </p>
           </div>
-          <span className="text-lg font-bold text-blue-600 tabular-nums">
+          <span className="text-lg font-bold text-brand-orange tabular-nums">
             {formatMoney(totalBusiness)}
           </span>
         </button>
@@ -89,10 +89,10 @@ export function Expenses() {
         <button
           type="button"
           onClick={() => setFormType('salary')}
-          className="flex items-center gap-4 rounded-xl border-2 border-purple-500/40 bg-purple-500/5 p-5 text-left hover:bg-purple-500/10 transition-colors"
+          className="flex items-center gap-4 rounded-xl border-2 border-brand-yellow/60 bg-brand-yellow/10 p-5 text-left hover:bg-brand-yellow/20 transition-colors"
         >
-          <div className="w-12 h-12 rounded-full bg-purple-500/15 flex items-center justify-center flex-shrink-0">
-            <Users className="w-6 h-6 text-purple-600" />
+          <div className="w-12 h-12 rounded-full bg-brand-yellow/30 flex items-center justify-center flex-shrink-0">
+            <Users className="w-6 h-6 text-brand-dark" />
           </div>
           <div className="flex-1">
             <p className="font-semibold flex items-center gap-2">
@@ -100,7 +100,7 @@ export function Expenses() {
             </p>
             <p className="text-sm text-muted-foreground">Pagos de sueldos</p>
           </div>
-          <span className="text-lg font-bold text-purple-600 tabular-nums">
+          <span className="text-lg font-bold text-brand-dark tabular-nums">
             {formatMoney(totalSalary)}
           </span>
         </button>
@@ -139,8 +139,8 @@ export function Expenses() {
                       <span
                         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                           expense.type === 'business'
-                            ? 'bg-blue-500/15 text-blue-600'
-                            : 'bg-purple-500/15 text-purple-600'
+                            ? 'bg-brand-orange/20 text-brand-orange'
+                            : 'bg-brand-yellow/30 text-brand-dark'
                         }`}
                       >
                         {TYPE_LABEL[expense.type]}

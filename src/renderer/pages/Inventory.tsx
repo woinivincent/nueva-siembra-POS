@@ -95,7 +95,7 @@ export function Inventory() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Inventario</h1>
+          <h1 className="text-2xl font-bold text-foreground">Inventario</h1>
           <p className="text-gray-500">{products.length} productos</p>
         </div>
         
