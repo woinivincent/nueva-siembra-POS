@@ -54,17 +54,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         "border-b border-white/10 transition-all duration-300",
         isExpanded ? "p-6" : "p-4"
       )}>
+        {/* El logo ya lleva el nombre, así que reemplaza al título escrito */}
         {isExpanded ? (
-          <>
-            <h1 className="text-2xl font-bold text-brand-green whitespace-nowrap">Nueva Siembra</h1>
-            <p className="text-xs text-white/60 mt-1 whitespace-nowrap">
+          <div className="flex flex-col items-center">
+            <img
+              src="./logo.png"
+              alt="Nueva Siembra — Productos Saludables"
+              className="w-28 h-28"
+            />
+            <p className="text-xs text-white/60 mt-2 whitespace-nowrap">
               Punto de Venta
             </p>
-          </>
-        ) : (
-          <div className="w-8 h-8 rounded-lg bg-brand-green flex items-center justify-center mx-auto">
-            <span className="text-sm font-bold text-brand-dark">NS</span>
           </div>
+        ) : (
+          <img
+            src="./logo.png"
+            alt="Nueva Siembra"
+            className="w-9 h-9 mx-auto"
+          />
         )}
       </div>
 

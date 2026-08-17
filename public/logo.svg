@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Nueva Siembra — Productos Saludables">
+  <defs>
+    <!-- Arcos guía para el texto circular -->
+    <path id="ns-arco-superior" d="M 74,256 A 182,182 0 0 1 438,256" fill="none"/>
+    <path id="ns-arco-inferior" d="M 84,256 A 172,172 0 0 0 428,256" fill="none"/>
+  </defs>
+
+  <!-- Fondo: el negro del logo -->
+  <circle cx="256" cy="256" r="256" fill="#1d262d"/>
+
+  <!-- Texto circular -->
+  <g fill="#ffffff" font-family="Liberation Sans, DejaVu Sans, Arial, sans-serif" font-weight="bold">
+    <text font-size="45" letter-spacing="7">
+      <textPath href="#ns-arco-superior" startOffset="50%" text-anchor="middle">NUEVA SIEMBRA</textPath>
+    </text>
+    <text font-size="29" letter-spacing="3">
+      <textPath href="#ns-arco-inferior" startOffset="50%" text-anchor="middle">PRODUCTOS SALUDABLES</textPath>
+    </text>
+  </g>
+
+  <!-- Los dos puntos que separan el texto de arriba del de abajo -->
+  <circle cx="76" cy="247" r="10" fill="#ffffff"/>
+  <circle cx="436" cy="247" r="10" fill="#ffffff"/>
+
+  <!-- Sol naciente: las hojas le tapan la base, así que no se ve el corte recto -->
+  <path d="M 173,302 A 84,84 0 0 1 341,302 Z" fill="#f79200"/>
+
+  <!-- Hojas: nacen juntas abajo y se abren anchas hacia los costados -->
+  <g fill="#aabd7d" stroke="#1d262d" stroke-width="8" stroke-linejoin="round">
+    <path d="M 256,334 C 176,338 126,304 134,230 C 206,246 246,286 256,334 Z"/>
+    <path d="M 256,334 C 336,338 386,304 378,230 C 306,246 266,286 256,334 Z"/>
+  </g>
+  <!-- Nervaduras -->
+  <g fill="none" stroke="#1d262d" stroke-width="5" stroke-linecap="round">
+    <path d="M 252,328 C 216,304 178,278 140,242"/>
+    <path d="M 260,328 C 296,304 334,278 372,242"/>
+  </g>
+</svg>

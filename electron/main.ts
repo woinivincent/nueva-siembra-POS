@@ -11,6 +11,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
+    // Vite copia public/ dentro de dist/, que es lo que se empaqueta
+    icon: path.join(__dirname, "../dist/icon.ico"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
