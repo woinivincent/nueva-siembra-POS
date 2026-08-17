@@ -68,7 +68,7 @@ export function ProductGrid({ searchTerm, selectedCategory }: ProductGridProps) 
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(215px,1fr))]">
         {filteredProducts.map(product => (
           <ProductCard
             key={product.id}

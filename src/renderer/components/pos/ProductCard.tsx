@@ -19,37 +19,45 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         product.stock > 0 ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
       }`}
     >
-      <div className="aspect-square bg-muted relative overflow-hidden">
+      {/*
+        Sin imagen cargada se usa una franja baja en vez del recuadro grande:
+        en un monitor de 768 px de alto eso es la diferencia entre ver dos
+        productos o ver seis.
+      */}
+      <div
+        className={`bg-muted relative overflow-hidden ${
+          product.image ? 'aspect-[4/3]' : 'h-12'
+        }`}
+      >
         {product.image ? (
-          <img 
-            src={product.image} 
+          <img
+            src={product.image}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-16 h-16 text-muted-foreground/50" />
+            <Package className="w-6 h-6 text-muted-foreground/40" />
           </div>
         )}
-        
+
         {/* Badge de stock bajo */}
         {isLowStock && (
-          <div className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-xs px-2 py-1 rounded">
+          <div className="absolute top-1 right-1 bg-destructive text-destructive-foreground text-xs px-2 py-0.5 rounded">
             Stock Bajo
           </div>
         )}
-        
       </div>
       
       <div className="p-4 space-y-2">
         <div>
-          <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.8rem]">{product.name}</h3>
+          <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.8rem] break-words">{product.name}</h3>
           <p className="text-xs text-muted-foreground">{product.category}</p>
         </div>
         
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-lg font-bold text-primary truncate">${product.price.toFixed(2)}</p>
+            <p className="text-base font-bold text-brand-green-ink">${product.price.toFixed(2)}</p>
             <p className="text-xs text-muted-foreground">Stock: {product.stock}</p>
           </div>
           

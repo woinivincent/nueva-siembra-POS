@@ -341,7 +341,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 /* TAB PAGO */
                 <div className="space-y-4">
                       {/* Métodos de pago simple */}
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         {paymentMethods.map((method) => {
                           const Icon = method.icon;
                           const isSelected = selectedMethod === method.id;

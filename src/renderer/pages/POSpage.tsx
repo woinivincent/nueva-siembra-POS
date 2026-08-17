@@ -73,7 +73,7 @@ export function POSPage() {
       </div>
 
       {/* Carrito: mismo ancho que antes, pero de alto completo */}
-      <div className="w-96 border-l bg-card">
+      <div className="w-80 xl:w-96 flex-shrink-0 border-l bg-card">
         <Cart />
       </div>
     </div>
