@@ -49,15 +49,6 @@ export function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle("products:getFavorites", () => {
-    try {
-      return productsRepository.getFavorites();
-    } catch (error) {
-      console.error("Error getting favorites:", error);
-      throw error;
-    }
-  });
-
   ipcMain.handle("products:getByCategory", (_event, category: string) => {
     try {
       return productsRepository.getByCategory(category);

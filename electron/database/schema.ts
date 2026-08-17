@@ -20,8 +20,6 @@ export const products = sqliteTable('products', {
   unit: text('unit', { enum: ['ud', 'kg'] }).default('ud').notNull(),
   image: text('image'),
   isActive: integer('is_active', { mode: 'boolean' }).default(true),
-  isFavorite: integer('is_favorite', { mode: 'boolean' }).default(false),
-  favoriteKey: text('favorite_key'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 }, (table) => ({

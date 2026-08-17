@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { Search } from 'lucide-react';
 import { ProductGrid } from '@/renderer/components/pos/ProductGrid';
 import { Cart } from '@/renderer/components/pos/Cart';
-import { QuickAccessButtons } from '@/renderer/components/pos/QuickAccessButtons';
 import { Button } from '@/renderer/components/ui/button';
 
 export function POSPage() {
@@ -58,7 +57,6 @@ export function POSPage() {
         </div>
 
         {/* Accesos Rápidos */}
-        <QuickAccessButtons />
       </div>
 
       {/* Contenido Principal */}

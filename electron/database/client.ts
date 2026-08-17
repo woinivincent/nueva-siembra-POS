@@ -40,6 +40,15 @@ function runMigrations() {
       }
     }
 
+    // Los accesos rápidos del POS se eliminaron: los productos ya no se
+    // marcan como favoritos ni tienen tecla asignada.
+    for (const column of ["is_favorite", "favorite_key"]) {
+      if (productColumns.has(column)) {
+        console.log(`📦 Ejecutando migración: eliminar ${column}...`);
+        sqlite.exec(`ALTER TABLE products DROP COLUMN ${column}`);
+      }
+    }
+
     if (productColumns.has("price_card")) {
       console.log("📦 Ejecutando migración: eliminar price_card...");
       sqlite.exec(`ALTER TABLE products DROP COLUMN price_card`);
@@ -175,8 +184,6 @@ function createTables() {
       unit TEXT DEFAULT 'ud' NOT NULL CHECK(unit IN ('ud', 'kg')),
       image TEXT,
       is_active INTEGER DEFAULT 1,
-      is_favorite INTEGER DEFAULT 0,
-      favorite_key TEXT,
       created_at INTEGER DEFAULT (strftime('%s', 'now')),
       updated_at INTEGER DEFAULT (strftime('%s', 'now'))
     );
@@ -302,11 +309,11 @@ function seedInitialData() {
     console.log("🌱 Insertando productos de ejemplo...");
 
     const insertProduct = sqlite.prepare(`
-      INSERT INTO products (name, category, price, price_pack_3, price_pack_4, price_pack_5, price_pack_10, cost, stock, stock_min, unit, barcode, is_favorite, favorite_key)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (name, category, price, price_pack_3, price_pack_4, price_pack_5, price_pack_10, cost, stock, stock_min, unit, barcode)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    // [nombre, categoria, precioUnidad, packX3, packX4, packX5, packX10, costo, stock, stockMin, unidad, barcode, favorito, tecla]
+    // [nombre, categoria, precioUnidad, packX3, packX4, packX5, packX10, costo, stock, stockMin, unidad, barcode]
     //
     // Viandas y tartas se venden por unidad y en packs de 3, 5 y 10.
     // Las hamburguesas tienen su propia lógica: únicamente pack x4.
@@ -314,22 +321,22 @@ function seedInitialData() {
     // ese pack; si están los cuatro en null, el producto es sólo por unidad.
     const products = [
       // Viandas
-      ["Vianda de milanesa", "Viandas", 3000, 2800, null, 2700, 2500, 1500, 20, 5, "ud", null, 1, "F1"],
-      ["Vianda de pollo", "Viandas", 3000, 2800, null, 2700, 2500, 1500, 20, 5, "ud", null, 1, "F2"],
-      ["Vianda de carne", "Viandas", 3000, 2800, null, 2700, 2500, 1600, 15, 5, "ud", null, 1, "F3"],
-      ["Vianda vegetariana", "Viandas", 3000, 2800, null, 2700, 2500, 1400, 15, 5, "ud", null, 0, null],
+      ["Vianda de milanesa", "Viandas", 3000, 2800, null, 2700, 2500, 1500, 20, 5, "ud", null],
+      ["Vianda de pollo", "Viandas", 3000, 2800, null, 2700, 2500, 1500, 20, 5, "ud", null],
+      ["Vianda de carne", "Viandas", 3000, 2800, null, 2700, 2500, 1600, 15, 5, "ud", null],
+      ["Vianda vegetariana", "Viandas", 3000, 2800, null, 2700, 2500, 1400, 15, 5, "ud", null],
 
       // Tartas
-      ["Tarta de verdura", "Tartas", 3000, 2800, null, 2700, 2500, 1500, 12, 4, "ud", null, 1, "F4"],
-      ["Tarta de jamón y queso", "Tartas", 3000, 2800, null, 2700, 2500, 1600, 12, 4, "ud", null, 0, null],
+      ["Tarta de verdura", "Tartas", 3000, 2800, null, 2700, 2500, 1500, 12, 4, "ud", null],
+      ["Tarta de jamón y queso", "Tartas", 3000, 2800, null, 2700, 2500, 1600, 12, 4, "ud", null],
       // Precio propio, pero participa de los packs con su valor diferenciado
-      ["Tarta de champignones", "Tartas", 3500, 3300, null, 3200, 3000, 1900, 8, 3, "ud", null, 0, null],
+      ["Tarta de champignones", "Tartas", 3500, 3300, null, 3200, 3000, 1900, 8, 3, "ud", null],
       // Se vende únicamente por unidad: sin precios de pack cargados
-      ["Tarta de salmón", "Tartas", 4500, null, null, null, null, 2600, 6, 2, "ud", null, 0, null],
+      ["Tarta de salmón", "Tartas", 4500, null, null, null, null, 2600, 6, 2, "ud", null],
 
       // Hamburguesas: sólo pack x4
-      ["Hamburguesa clásica", "Hamburguesas", 6000, null, 5600, null, null, 3000, 20, 5, "ud", null, 1, "F5"],
-      ["Hamburguesa doble", "Hamburguesas", 6000, null, 5600, null, null, 3300, 15, 5, "ud", null, 0, null],
+      ["Hamburguesa clásica", "Hamburguesas", 6000, null, 5600, null, null, 3000, 20, 5, "ud", null],
+      ["Hamburguesa doble", "Hamburguesas", 6000, null, 5600, null, null, 3300, 15, 5, "ud", null],
     ];
 
     const insertMany = sqlite.transaction((items: any[][]) => {

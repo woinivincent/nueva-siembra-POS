@@ -18,8 +18,6 @@ export interface Product {
   unit: 'ud' | 'kg';
   image: string | null;
   is_active: number;
-  is_favorite: number;
-  favorite_key: string | null;
   created_at: number | null;
   updated_at: number | null;
 }
@@ -41,8 +39,6 @@ export interface ProductDTO {
   unit: 'ud' | 'kg';
   image: string | null;
   isActive: boolean;
-  isFavorite: boolean;
-  favoriteKey: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -65,8 +61,6 @@ function toDTO(row: Product): ProductDTO {
     unit: row.unit,
     image: row.image,
     isActive: row.is_active === 1,
-    isFavorite: row.is_favorite === 1,
-    favoriteKey: row.favorite_key,
     createdAt: row.created_at ? new Date(row.created_at * 1000) : null,
     updatedAt: row.updated_at ? new Date(row.updated_at * 1000) : null,
   };
@@ -122,16 +116,6 @@ export class ProductsRepository {
     }
   }
 
-  getFavorites(): ProductDTO[] {
-    try {
-      const stmt = sqlite.prepare('SELECT * FROM products WHERE is_favorite = 1 AND is_active = 1 ORDER BY favorite_key');
-      const results = stmt.all() as Product[];
-      return results.map(toDTO);
-    } catch (error) {
-      console.error('Error in getFavorites:', error);
-      return [];
-    }
-  }
 
   getByCategory(category: string): ProductDTO[] {
     try {
@@ -169,8 +153,8 @@ export class ProductsRepository {
   create(data: Partial<ProductDTO>): ProductDTO | null {
     try {
       const stmt = sqlite.prepare(`
-        INSERT INTO products (name, category, price, price_pack_3, price_pack_4, price_pack_5, price_pack_10, cost, stock, stock_min, unit, barcode, description, image, is_favorite, favorite_key)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO products (name, category, price, price_pack_3, price_pack_4, price_pack_5, price_pack_10, cost, stock, stock_min, unit, barcode, description, image)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       const result = stmt.run(
@@ -188,8 +172,6 @@ export class ProductsRepository {
         data.barcode || null,
         data.description || null,
         data.image || null,
-        data.isFavorite ? 1 : 0,
-        data.favoriteKey || null
       );
       
       return this.getById(result.lastInsertRowid as number);
@@ -218,8 +200,6 @@ export class ProductsRepository {
       if (data.barcode !== undefined) { fields.push('barcode = ?'); values.push(data.barcode); }
       if (data.description !== undefined) { fields.push('description = ?'); values.push(data.description); }
       if (data.image !== undefined) { fields.push('image = ?'); values.push(data.image); }
-      if (data.isFavorite !== undefined) { fields.push('is_favorite = ?'); values.push(data.isFavorite ? 1 : 0); }
-      if (data.favoriteKey !== undefined) { fields.push('favorite_key = ?'); values.push(data.favoriteKey); }
       
       if (fields.length === 0) return this.getById(id);
       

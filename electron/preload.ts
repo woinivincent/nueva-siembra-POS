@@ -42,8 +42,6 @@ interface Product {
   unit: "ud" | "kg";
   image: string | null;
   isActive: boolean;
-  isFavorite: boolean;
-  favoriteKey: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -63,8 +61,6 @@ const electronAPI = {
       ipcRenderer.invoke("products:getById", id),
     getByBarcode: (barcode: string): Promise<Product | null> =>
       ipcRenderer.invoke("products:getByBarcode", barcode),
-    getFavorites: (): Promise<Product[]> =>
-      ipcRenderer.invoke("products:getFavorites"),
     getByCategory: (category: string): Promise<Product[]> =>
       ipcRenderer.invoke("products:getByCategory", category),
     getCategories: (): Promise<string[]> =>

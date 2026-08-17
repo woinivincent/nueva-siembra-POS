@@ -33,8 +33,6 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
     stock: '',
     stockMin: '',
     unit: 'ud' as 'ud' | 'kg',
-    isFavorite: false,
-    favoriteKey: '',
     image: null as string | null,
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -67,8 +65,6 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
           stock: product.stock.toString(),
           stockMin: product.stockMin?.toString() || '',
           unit: product.unit,
-          isFavorite: product.isFavorite,
-          favoriteKey: product.favoriteKey || '',
           image: product.image || null,
         });
         setUseNewCategory(false);
@@ -95,9 +91,7 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
           stock: '0',
           stockMin: '0',
           unit: 'ud',
-          isFavorite: false,
-          favoriteKey: '',
-          image: null,
+                      image: null,
         });
         setUseNewCategory(categories.length === 0);
         setImagePreview(null);
@@ -211,8 +205,6 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
         stock: parseFloat(formData.stock) || 0,
         stockMin: parseFloat(formData.stockMin) || 0,
         unit: formData.unit,
-        isFavorite: formData.isFavorite,
-        favoriteKey: formData.isFavorite ? formData.favoriteKey.trim() || null : null,
         image: formData.image,
       };
 
@@ -516,40 +508,6 @@ export function ProductFormModal({ isOpen, onClose, onSaved, product, categories
                 placeholder="0"
               />
             </div>
-          </div>
-
-          {/* Favorito */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.isFavorite}
-                onChange={(e) => handleChange('isFavorite', e.target.checked)}
-                className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
-              />
-              <div>
-                <span className="font-medium text-gray-900">⭐ Producto favorito</span>
-                <p className="text-sm text-gray-500">Aparecerá en los botones de acceso rápido</p>
-              </div>
-            </label>
-
-            {formData.isFavorite && (
-              <div className="mt-3 ml-8">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tecla de acceso rápido
-                </label>
-                <select
-                  value={formData.favoriteKey}
-                  onChange={(e) => handleChange('favoriteKey', e.target.value)}
-                  className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
-                >
-                  <option value="">Ninguna</option>
-                  {['F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'].map(key => (
-                    <option key={key} value={key}>{key}</option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
 
           {/* Error */}

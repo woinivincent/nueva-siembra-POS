@@ -59,9 +59,6 @@ export function ProductsTable({ products, onEdit, onDelete }: Props) {
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      {product.isFavorite && (
-                        <span className="text-yellow-500" title="Favorito">⭐</span>
-                      )}
                       <div>
                         <p className="font-medium text-gray-900">{product.name}</p>
                         {product.description && (

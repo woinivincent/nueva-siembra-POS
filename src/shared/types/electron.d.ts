@@ -17,8 +17,6 @@ export interface Product {
   unit: "ud" | "kg";
   image: string | null;
   isActive: boolean;
-  isFavorite: boolean;
-  favoriteKey: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -116,7 +114,6 @@ export interface ElectronAPI {
     search: (term: string) => Promise<Product[]>;
     getById: (id: number) => Promise<Product | null>;
     getByBarcode: (barcode: string) => Promise<Product | null>;
-    getFavorites: () => Promise<Product[]>;
     getByCategory: (category: string) => Promise<Product[]>;
     getCategories: () => Promise<string[]>;
     getLowStock: () => Promise<Product[]>;
