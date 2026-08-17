@@ -67,28 +67,31 @@ export function ProductGrid({ searchTerm, selectedCategory }: ProductGridProps) 
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      {filteredProducts.map(product => (
-        <div key={product.id} className="relative">
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filteredProducts.map(product => (
           <ProductCard
+            key={product.id}
             product={product}
             onAddToCart={() => handleProductClick(product)}
           />
-          {pickerFor?.id === product.id && (
-            <PackPicker
-              product={product}
-              onPick={(mode) => handlePick(product, mode)}
-              onClose={() => setPickerFor(null)}
-            />
-          )}
-        </div>
-      ))}
-      
-      {filteredProducts.length === 0 && (
-        <div className="col-span-full text-center py-12">
-          <p className="text-muted-foreground">No se encontraron productos</p>
-        </div>
+        ))}
+
+        {filteredProducts.length === 0 && (
+          <div className="col-span-full text-center py-12">
+            <p className="text-muted-foreground">No se encontraron productos</p>
+          </div>
+        )}
+      </div>
+
+      {/* Modal de formato: se monta una sola vez, fuera de la grilla */}
+      {pickerFor && (
+        <PackPicker
+          product={pickerFor}
+          onPick={(mode) => handlePick(pickerFor, mode)}
+          onClose={() => setPickerFor(null)}
+        />
       )}
-    </div>
+    </>
   );
 }

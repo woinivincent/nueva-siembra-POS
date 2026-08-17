@@ -24,7 +24,11 @@ export function POSPage() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col">
+    // El carrito es una columna propia de alto completo: arranca arriba de
+    // todo, al lado del buscador, y no debajo como estaba antes.
+    <div className="h-screen flex">
+      {/* Columna izquierda: buscador, categorías y grilla */}
+      <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="border-b bg-card p-4 space-y-4">
         <div className="flex items-center gap-4">
@@ -59,20 +63,18 @@ export function POSPage() {
         {/* Accesos Rápidos */}
       </div>
 
-      {/* Contenido Principal */}
-      <div className="flex-1 flex overflow-hidden">
         {/* Grid de Productos */}
         <div className="flex-1 overflow-y-auto p-6">
-          <ProductGrid 
-            searchTerm={searchTerm} 
+          <ProductGrid
+            searchTerm={searchTerm}
             selectedCategory={selectedCategory}
           />
         </div>
+      </div>
 
-        {/* Carrito */}
-        <div className="w-96 border-l bg-card">
-          <Cart />
-        </div>
+      {/* Carrito: mismo ancho que antes, pero de alto completo */}
+      <div className="w-96 border-l bg-card">
+        <Cart />
       </div>
     </div>
   );

@@ -43,13 +43,13 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       
       <div className="p-4 space-y-2">
         <div>
-          <h3 className="font-semibold text-sm line-clamp-1">{product.name}</h3>
+          <h3 className="font-semibold text-sm line-clamp-2 min-h-[2.8rem]">{product.name}</h3>
           <p className="text-xs text-muted-foreground">{product.category}</p>
         </div>
         
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-lg font-bold text-primary">${product.price.toFixed(2)}</p>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-lg font-bold text-primary truncate">${product.price.toFixed(2)}</p>
             <p className="text-xs text-muted-foreground">Stock: {product.stock}</p>
           </div>
           
@@ -60,7 +60,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               onAddToCart();
             }}
             disabled={product.stock <= 0}
-            className="rounded-full"
+            className="rounded-full flex-shrink-0"
           >
             <ShoppingCart className="w-4 h-4" />
           </Button>

@@ -4,6 +4,19 @@ module.exports = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Toda la tipografía sube 3 puntos (4px) respecto de la escala por
+      // defecto de Tailwind. Se toca acá y no clase por clase para que el
+      // aumento sea parejo en toda la app.
+      fontSize: {
+        xs: ['1rem', { lineHeight: '1.4rem' }],        // 12px -> 16px
+        sm: ['1.125rem', { lineHeight: '1.6rem' }],    // 14px -> 18px
+        base: ['1.25rem', { lineHeight: '1.8rem' }],   // 16px -> 20px
+        lg: ['1.375rem', { lineHeight: '1.9rem' }],    // 18px -> 22px
+        xl: ['1.5rem', { lineHeight: '2rem' }],        // 20px -> 24px
+        '2xl': ['1.75rem', { lineHeight: '2.25rem' }], // 24px -> 28px
+        '3xl': ['2.125rem', { lineHeight: '2.5rem' }], // 30px -> 34px
+        '4xl': ['2.5rem', { lineHeight: '2.75rem' }],  // 36px -> 40px
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

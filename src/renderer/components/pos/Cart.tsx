@@ -363,7 +363,7 @@ export function Cart({ onCheckout }: CartProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full justify-center gap-2"
+                  className="w-full justify-center gap-2 h-[31px]"
                   onClick={() => setShowDiscountInput(true)}
                 >
                   <Percent className="w-4 h-4" />
