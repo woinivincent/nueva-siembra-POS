@@ -33,8 +33,8 @@ const paymentMethods: {
   icon: React.ElementType;
   color: string;
 }[] = [
-  { id: "cash", label: "Efectivo", icon: Banknote, color: "bg-green-500" },
-  { id: "transfer", label: "Transferencia", icon: ArrowLeftRight, color: "bg-orange-500" },
+  { id: "cash", label: "Efectivo", icon: Banknote, color: "bg-primary" },
+  { id: "transfer", label: "Transferencia", icon: ArrowLeftRight, color: "bg-brand-orange" },
 ];
 
 type TabType = "payment" | "customer";
@@ -255,22 +255,22 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
             /* VENTA COMPLETADA */
             <div className="space-y-4 py-2">
               <div className="text-center">
-                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+                <div className="w-14 h-14 bg-brand-green/25 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle className="w-8 h-8 text-brand-green-ink" />
                 </div>
-                <p className="text-2xl font-bold text-green-600">{formatMoney(total)}</p>
-                <p className="text-gray-500 text-sm">Venta #{completedSaleId?.toString().padStart(6, "0")}</p>
+                <p className="text-2xl font-bold text-brand-green-ink">{formatMoney(total)}</p>
+                <p className="text-muted-foreground text-sm">Venta #{completedSaleId?.toString().padStart(6, "0")}</p>
 
                 {selectedCustomer && (
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     Cliente: {selectedCustomer.firstName} {selectedCustomer.lastName}
                   </p>
                 )}
 
                 {selectedMethod === "cash" && change > 0 && (
-                  <div className="mt-3 p-2 bg-yellow-50 rounded-lg">
-                    <p className="text-xs text-yellow-700">Cambio a entregar:</p>
-                    <p className="text-lg font-bold text-yellow-700">{formatMoney(change)}</p>
+                  <div className="mt-3 p-2 bg-brand-yellow/15 rounded-lg">
+                    <p className="text-xs text-brand-dark">Cambio a entregar:</p>
+                    <p className="text-lg font-bold text-brand-dark">{formatMoney(change)}</p>
                   </div>
                 )}
               </div>
@@ -298,10 +298,10 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 <p className="text-xs text-muted-foreground">Total a cobrar</p>
                 <p className="text-2xl font-bold">{formatMoney(total)}</p>
                 {discount > 0 && (
-                  <p className="text-xs text-green-600">Descuento: -{formatMoney(discount)}</p>
+                  <p className="text-xs text-brand-green-ink">Descuento: -{formatMoney(discount)}</p>
                 )}
                 {selectedCustomer && (
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-brand-orange-ink mt-1">
                     👤 {selectedCustomer.firstName} {selectedCustomer.lastName}
                   </p>
                 )}
@@ -315,7 +315,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                   className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2 ${
                     activeTab === "payment"
                       ? "border-primary text-primary"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <PaymentIcon className="w-4 h-4" />
@@ -327,12 +327,12 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                   className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2 ${
                     activeTab === "customer"
                       ? "border-primary text-primary"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <User className="w-4 h-4" />
                   Cliente
-                  {selectedCustomer && <span className="w-2 h-2 bg-green-500 rounded-full"></span>}
+                  {selectedCustomer && <span className="w-2 h-2 bg-primary rounded-full"></span>}
                 </button>
               </div>
 
@@ -353,7 +353,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                               className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-1 ${
                                 isSelected
                                   ? `border-primary ${method.color} text-white`
-                                  : "border-gray-200 hover:border-gray-300"
+                                  : "border-border hover:border-input"
                               }`}
                             >
                               <Icon className="w-5 h-5" />
@@ -369,7 +369,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                           <div>
                             <label className="block text-xs font-medium mb-1">Efectivo recibido</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                               <input
                                 type="number"
                                 value={cashReceived}
@@ -378,13 +378,13 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                                 step="0.01"
                                 min="0"
                                 autoFocus
-                                className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-lg font-semibold text-gray-900 bg-white"
+                                className="w-full pl-8 pr-4 py-2 border border-input rounded-lg text-lg font-semibold text-foreground bg-card"
                               />
                             </div>
                           </div>
 
                           {cashReceivedNum > 0 && (
-                            <div className={`p-2 rounded-lg text-sm ${change >= 0 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                            <div className={`p-2 rounded-lg text-sm ${change >= 0 ? "bg-brand-green/10 text-brand-green-ink" : "bg-destructive/10 text-destructive"}`}>
                               <div className="flex justify-between items-center">
                                 <span>Cambio:</span>
                                 <span className="text-lg font-bold">{formatMoney(Math.max(0, change))}</span>
@@ -398,7 +398,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                                 key={amount}
                                 type="button"
                                 onClick={() => setCashReceived(amount.toString())}
-                                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs text-gray-600"
+                                className="px-2 py-1 bg-secondary hover:bg-secondary rounded text-xs text-muted-foreground"
                               >
                                 ${amount}
                               </button>
@@ -406,7 +406,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                             <button
                               type="button"
                               onClick={() => setCashReceived(Math.ceil(total).toString())}
-                              className="px-2 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded text-xs"
+                              className="px-2 py-1 bg-brand-green/25 hover:bg-brand-green/40 text-brand-green-ink rounded text-xs"
                             >
                               Exacto
                             </button>
@@ -418,17 +418,17 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                 /* TAB CLIENTE */
                 <div className="space-y-3">
                   {selectedCustomer ? (
-                    <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                    <div className="p-3 rounded-lg bg-brand-green/10 border border-primary/30">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-foreground">
                             {selectedCustomer.firstName} {selectedCustomer.lastName}
                           </p>
                           {selectedCustomer.phone && (
-                            <p className="text-xs text-gray-500">{selectedCustomer.phone}</p>
+                            <p className="text-xs text-muted-foreground">{selectedCustomer.phone}</p>
                           )}
                           {selectedCustomer.email && (
-                            <p className="text-xs text-gray-500">{selectedCustomer.email}</p>
+                            <p className="text-xs text-muted-foreground">{selectedCustomer.email}</p>
                           )}
                         </div>
                         <button
@@ -438,7 +438,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                             setCustomerSearch("");
                             setCustomerResults([]);
                           }}
-                          className="text-xs text-red-600 hover:text-red-700"
+                          className="text-xs text-destructive hover:text-destructive"
                         >
                           Quitar
                         </button>
@@ -451,20 +451,20 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                         value={customerSearch}
                         onChange={(e) => setCustomerSearch(e.target.value)}
                         placeholder="Buscar por nombre, teléfono..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white"
+                        className="w-full px-3 py-2 border border-input rounded-lg text-sm text-foreground bg-card"
                         autoFocus
                       />
 
-                      <div className="border rounded-lg overflow-hidden bg-white max-h-48 overflow-y-auto">
+                      <div className="border rounded-lg overflow-hidden bg-card max-h-48 overflow-y-auto">
                         {isCustomerLoading ? (
-                          <div className="p-3 text-sm text-gray-500">Buscando...</div>
+                          <div className="p-3 text-sm text-muted-foreground">Buscando...</div>
                         ) : customerSearch.trim() && customerResults.length === 0 ? (
                           <div className="p-3 text-center">
-                            <p className="text-sm text-gray-500 mb-2">Sin resultados</p>
+                            <p className="text-sm text-muted-foreground mb-2">Sin resultados</p>
                             <button
                               type="button"
                               onClick={() => setIsCreateCustomerOpen(true)}
-                              className="text-sm px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                              className="text-sm px-3 py-1.5 rounded-lg bg-brand-orange text-white hover:opacity-90"
                             >
                               Crear cliente nuevo
                             </button>
@@ -481,12 +481,12 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                                   setCustomerResults([]);
                                   setActiveTab("payment");
                                 }}
-                                className="w-full text-left p-3 hover:bg-gray-50"
+                                className="w-full text-left p-3 hover:bg-accent"
                               >
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-sm font-medium text-foreground">
                                   {c.firstName} {c.lastName}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-muted-foreground">
                                   {c.phone || c.email || c.occupation || ""}
                                 </p>
                               </button>
@@ -494,11 +494,11 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                           </div>
                         ) : (
                           <div className="p-3 text-center">
-                            <p className="text-xs text-gray-500 mb-2">Escribí para buscar</p>
+                            <p className="text-xs text-muted-foreground mb-2">Escribí para buscar</p>
                             <button
                               type="button"
                               onClick={() => setIsCreateCustomerOpen(true)}
-                              className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-700"
+                              className="text-sm px-3 py-1.5 rounded-lg border border-input hover:bg-accent text-foreground"
                             >
                               Crear cliente nuevo
                             </button>
@@ -506,7 +506,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
                         )}
                       </div>
 
-                      <p className="text-xs text-gray-500 text-center">
+                      <p className="text-xs text-muted-foreground text-center">
                         El cliente es opcional. Podés continuar sin asignar.
                       </p>
                     </>
@@ -516,7 +516,7 @@ export function PaymentModal({ open, onOpenChange }: PaymentModalProps) {
 
               {/* Error */}
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs">
+                <div className="bg-destructive/10 border border-destructive/30 text-destructive px-3 py-2 rounded-lg text-xs">
                   {error}
                 </div>
               )}

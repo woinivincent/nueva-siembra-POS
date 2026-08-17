@@ -96,12 +96,12 @@ export function Inventory() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Inventario</h1>
-          <p className="text-gray-500">{products.length} productos</p>
+          <p className="text-muted-foreground">{products.length} productos</p>
         </div>
         
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Nuevo Producto
@@ -109,27 +109,27 @@ export function Inventory() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-card rounded-xl shadow p-4">
         <div className="flex flex-wrap gap-4 items-center">
           {/* Búsqueda */}
           <div className="relative flex-1 min-w-[250px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar por nombre, código o categoría..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border  text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="w-full pl-10 pr-4 py-2 border  text-black border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
             />
           </div>
 
           {/* Filtro categoría */}
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-400" />
+            <Filter className="w-5 h-5 text-muted-foreground" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300   text-black rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="px-3 py-2 border border-input   text-black rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
             >
               <option value="all">Todas las categorías</option>
               {categories.map(cat => (
@@ -143,14 +143,14 @@ export function Inventory() {
             onClick={() => setShowLowStock(!showLowStock)}
             className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
               showLowStock 
-                ? 'bg-red-100 text-red-700 border-2 border-red-300' 
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-destructive/15 text-destructive border-2 border-destructive/40' 
+                : 'bg-secondary text-muted-foreground hover:bg-secondary'
             }`}
           >
             <AlertTriangle className="w-5 h-5" />
             Stock Bajo
             {lowStockCount > 0 && (
-              <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+              <span className="bg-destructive text-white text-xs px-2 py-0.5 rounded-full">
                 {lowStockCount}
               </span>
             )}
@@ -160,17 +160,17 @@ export function Inventory() {
 
       {/* Tabla de productos */}
       {isLoading ? (
-        <div className="bg-white rounded-xl shadow p-8">
+        <div className="bg-card rounded-xl shadow p-8">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-            <span className="ml-3 text-gray-500">Cargando productos...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3 text-muted-foreground">Cargando productos...</span>
           </div>
         </div>
       ) : products.length === 0 ? (
-        <div className="bg-white rounded-xl shadow p-12 text-center">
-          <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">No hay productos</h3>
-          <p className="text-gray-500 mb-4">
+        <div className="bg-card rounded-xl shadow p-12 text-center">
+          <Package className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay productos</h3>
+          <p className="text-muted-foreground mb-4">
             {searchTerm || selectedCategory !== 'all' || showLowStock
               ? 'No se encontraron productos con los filtros aplicados'
               : 'Comenzá agregando tu primer producto'}
@@ -178,7 +178,7 @@ export function Inventory() {
           {!searchTerm && selectedCategory === 'all' && !showLowStock && (
             <button
               onClick={() => setShowModal(true)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
             >
               Agregar Producto
             </button>

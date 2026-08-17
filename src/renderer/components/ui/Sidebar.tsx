@@ -73,7 +73,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         onClick={onToggle}
         className={cn(
           "absolute top-20 -right-3 w-6 h-6 bg-brand-dark border border-white/20 rounded-full flex items-center justify-center",
-          "hover:bg-white/10 transition-colors shadow-sm",
+          "hover:bg-card/10 transition-colors shadow-sm",
           "opacity-0 group-hover:opacity-100",
           isHovered && "opacity-100"
         )}
@@ -102,7 +102,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 isExpanded ? "px-4 py-3" : "px-3 py-3 justify-center",
                 isActive
                   ? "bg-brand-green text-brand-dark"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
+                  : "text-white/70 hover:bg-card/10 hover:text-white"
               )}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />

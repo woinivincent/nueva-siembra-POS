@@ -22,6 +22,12 @@
     --brand-red: 358 81% 56%;
     --brand-dark: 206 22% 15%;
 
+    /* Versiones oscuras del verde y el naranja, para usarlos como TEXTO sobre
+       fondo claro. Los originales son claros y encima del blanco no se leen;
+       estos conservan el tono de marca con contraste suficiente. */
+    --brand-green-ink: 78 35% 28%;
+    --brand-orange-ink: 33 100% 32%;
+
     /* Modo claro: es el que usa la app por defecto */
     --background: 40 20% 98%;
     --foreground: 206 22% 15%;

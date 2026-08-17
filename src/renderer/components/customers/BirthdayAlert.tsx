@@ -22,13 +22,13 @@ export function BirthdayAlert({ customers }: Props) {
       {/* Botón cerrar */}
       <button
         onClick={() => setDismissed(true)}
-        className="absolute top-2 right-2 p-1 hover:bg-white/20 rounded-full transition-colors"
+        className="absolute top-2 right-2 p-1 hover:bg-card/20 rounded-full transition-colors"
       >
         <X className="w-5 h-5" />
       </button>
 
       <div className="flex items-start gap-4">
-        <div className="bg-white/20 rounded-full p-3">
+        <div className="bg-card/20 rounded-full p-3">
           <Cake className="w-8 h-8" />
         </div>
         
@@ -41,7 +41,7 @@ export function BirthdayAlert({ customers }: Props) {
             {customers.map(customer => (
               <div 
                 key={customer.id}
-                className="bg-white/10 rounded-lg p-3 flex items-center justify-between"
+                className="bg-card/10 rounded-lg p-3 flex items-center justify-between"
               >
                 <div>
                   <p className="font-semibold">{customer.fullName}</p>
@@ -56,7 +56,7 @@ export function BirthdayAlert({ customers }: Props) {
                      <a href={`https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`¡Feliz cumpleaños ${customer.firstName}! 🎂🎉 Te esperamos en el local con una promo especial para vos.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-green-500 hover:bg-green-600 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
+                      className="px-3 py-1.5 bg-primary hover:bg-primary rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
                     >
                       <Gift className="w-4 h-4" />
                       Enviar Saludo

@@ -98,15 +98,15 @@ export function SupplierFormModal({ isOpen, onClose, onSaved, supplier, categori
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+      <div className="bg-card rounded-xl shadow-xl w-full max-w-lg">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-xl font-bold text-foreground">
             {isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+            className="p-2 text-muted-foreground hover:text-muted-foreground hover:bg-accent rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -116,14 +116,14 @@ export function SupplierFormModal({ isOpen, onClose, onSaved, supplier, categori
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Nombre empresa */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Nombre de la empresa *
             </label>
             <input
               type="text"
               value={formData.companyName}
               onChange={(e) => handleChange('companyName', e.target.value)}
-              className="w-full px-3 py-2 border text-gray-800 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              className="w-full px-3 py-2 border text-foreground border-input rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow"
               placeholder="Ej: Distribuidora ABC"
               autoFocus
             />
@@ -131,21 +131,21 @@ export function SupplierFormModal({ isOpen, onClose, onSaved, supplier, categori
 
           {/* Nombre contacto */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Nombre del contacto
             </label>
             <input
               type="text"
               value={formData.contactName}
               onChange={(e) => handleChange('contactName', e.target.value)}
-              className="w-full px-3 py-2 border text-gray-800 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              className="w-full px-3 py-2 border text-foreground border-input rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow"
               placeholder="Ej: Juan Pérez"
             />
           </div>
 
           {/* Categoría */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Categoría / Rubro
             </label>
             <div className="flex gap-2">
@@ -154,7 +154,7 @@ export function SupplierFormModal({ isOpen, onClose, onSaved, supplier, categori
                   <select
                     value={formData.category}
                     onChange={(e) => handleChange('category', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="flex-1 px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow"
                   >
                     <option value="">Sin categoría</option>
                     {categories.map(cat => (
@@ -164,7 +164,7 @@ export function SupplierFormModal({ isOpen, onClose, onSaved, supplier, categori
                   <button
                     type="button"
                     onClick={() => setUseNewCategory(true)}
-                    className="px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg text-sm"
+                    className="px-3 py-2 text-brand-dark hover:bg-brand-yellow/15 rounded-lg text-sm"
                   >
                     + Nueva
                   </button>
@@ -175,14 +175,14 @@ export function SupplierFormModal({ isOpen, onClose, onSaved, supplier, categori
                     type="text"
                     value={formData.newCategory}
                     onChange={(e) => handleChange('newCategory', e.target.value)}
-                    className="flex-1 px-3 py-2 border text-gray-800 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="flex-1 px-3 py-2 border text-foreground border-input rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow"
                     placeholder="Ej: Frutas y Verduras"
                   />
                   {categories.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setUseNewCategory(false)}
-                      className="px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm"
+                      className="px-3 py-2 text-muted-foreground hover:bg-accent rounded-lg text-sm"
                     >
                       Existente
                     </button>
@@ -195,26 +195,26 @@ export function SupplierFormModal({ isOpen, onClose, onSaved, supplier, categori
           {/* Teléfono y Email */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Teléfono
               </label>
               <input
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
-                className="w-full px-3 py-2 border text-gray-800 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border text-foreground border-input rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow"
                 placeholder="+54 11 1234-5678"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Email
               </label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
-                className="w-full px-3 py-2 border text-gray-800 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border text-foreground border-input rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow"
                 placeholder="proveedor@email.com"
               />
             </div>
@@ -222,25 +222,25 @@ export function SupplierFormModal({ isOpen, onClose, onSaved, supplier, categori
 
           {/* Error */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
           {/* Botones */}
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              className="flex-1 px-4 py-3 border border-input text-foreground rounded-lg hover:bg-accent disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 font-medium"
+              className="flex-1 px-4 py-3 bg-brand-yellow text-brand-dark rounded-lg hover:opacity-90 disabled:opacity-50 font-medium"
             >
               {isLoading ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Crear Proveedor'}
             </button>

@@ -265,7 +265,7 @@ export function Cart({ onCheckout }: CartProps) {
 
               {/* Descuento */}
               {discountType !== "none" && discount > 0 ? (
-                <div className="flex justify-between items-center text-green-700">
+                <div className="flex justify-between items-center text-brand-green-ink">
                   <div className="flex items-center gap-2">
                     <span>
                       Descuento{" "}

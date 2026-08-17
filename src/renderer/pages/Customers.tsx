@@ -101,12 +101,12 @@ export function Customers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
-          <p className="text-gray-500">{customers.length} clientes registrados</p>
+          <p className="text-muted-foreground">{customers.length} clientes registrados</p>
         </div>
         
         <button
           onClick={() => setShowFormModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="px-4 py-2 bg-brand-orange text-white rounded-lg hover:opacity-90 flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Nuevo Cliente
@@ -114,32 +114,32 @@ export function Customers() {
       </div>
 
       {/* Búsqueda */}
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-card rounded-xl shadow p-4">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar por nombre, teléfono o profesión..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border text-gray-800 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full pl-10 pr-4 py-2 border text-foreground border-input rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
           />
         </div>
       </div>
 
       {/* Tabla de clientes */}
       {isLoading ? (
-        <div className="bg-white rounded-xl shadow p-8">
+        <div className="bg-card rounded-xl shadow p-8">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-3 text-gray-500">Cargando clientes...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-orange"></div>
+            <span className="ml-3 text-muted-foreground">Cargando clientes...</span>
           </div>
         </div>
       ) : customers.length === 0 ? (
-        <div className="bg-white rounded-xl shadow p-12 text-center">
-          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">No hay clientes</h3>
-          <p className="text-gray-500 mb-4">
+        <div className="bg-card rounded-xl shadow p-12 text-center">
+          <Users className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay clientes</h3>
+          <p className="text-muted-foreground mb-4">
             {searchTerm
               ? 'No se encontraron clientes con ese criterio'
               : 'Comenzá agregando tu primer cliente'}
@@ -147,7 +147,7 @@ export function Customers() {
           {!searchTerm && (
             <button
               onClick={() => setShowFormModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-brand-orange text-white rounded-lg hover:opacity-90"
             >
               Agregar Cliente
             </button>

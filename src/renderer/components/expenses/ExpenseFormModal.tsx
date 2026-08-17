@@ -91,8 +91,8 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+      <div className="bg-card rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full ${accent.bg} flex items-center justify-center`}>
               {isSalary ? (
@@ -102,28 +102,28 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
               )}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-foreground">
                 Egreso de {isSalary ? 'Sueldo' : 'Negocio'}
               </h2>
-              <p className="text-xs text-gray-500">Registrar salida de dinero</p>
+              <p className="text-xs text-muted-foreground">Registrar salida de dinero</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-muted-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+            <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Monto *</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -131,14 +131,14 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
                 autoFocus
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className={`w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 ${accent.ring} bg-white text-gray-900`}
+                className={`w-full pl-8 pr-3 py-2 border border-input rounded-lg focus:ring-2 ${accent.ring} bg-card text-foreground`}
                 placeholder="0.00"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Concepto *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Concepto *</label>
             <div className="flex flex-wrap gap-2">
               {CONCEPTS[type].map((option) => (
                 <button
@@ -148,7 +148,7 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
                   className={`rounded-lg px-3 py-1.5 text-sm font-medium border transition-colors ${
                     concept === option
                       ? `${accent.bg} ${accent.text} border-current`
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                      : 'bg-secondary text-muted-foreground border-border hover:bg-accent'
                   }`}
                 >
                   {option}
@@ -160,14 +160,14 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
                 type="text"
                 value={customConcept}
                 onChange={(e) => setCustomConcept(e.target.value)}
-                className={`mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 ${accent.ring} bg-white text-gray-900`}
+                className={`mt-2 w-full px-3 py-2 border border-input rounded-lg focus:ring-2 ${accent.ring} bg-card text-foreground`}
                 placeholder="Escribí el concepto"
               />
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Medio de pago</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Medio de pago</label>
             <div className="grid grid-cols-2 gap-2">
               {(['cash', 'transfer'] as const).map((method) => (
                 <button
@@ -177,7 +177,7 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
                   className={`rounded-lg py-2 text-sm font-medium border transition-colors ${
                     paymentMethod === method
                       ? `${accent.bg} ${accent.text} border-current`
-                      : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                      : 'bg-secondary text-muted-foreground border-border hover:bg-accent'
                   }`}
                 >
                   {method === 'cash' ? 'Efectivo' : 'Transferencia'}
@@ -187,24 +187,24 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+            <label className="block text-sm font-medium text-foreground mb-1">Fecha</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 ${accent.ring} bg-white text-gray-900`}
+              className={`w-full px-3 py-2 border border-input rounded-lg focus:ring-2 ${accent.ring} bg-card text-foreground`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Detalle (opcional)
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 ${accent.ring} bg-white text-gray-900`}
+              className={`w-full px-3 py-2 border border-input rounded-lg focus:ring-2 ${accent.ring} bg-card text-foreground`}
               placeholder="Nota adicional"
             />
           </div>
@@ -213,7 +213,7 @@ export function ExpenseFormModal({ isOpen, type, onClose, onSaved }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+              className="flex-1 py-2 rounded-lg border border-input text-foreground font-medium hover:bg-accent"
             >
               Cancelar
             </button>

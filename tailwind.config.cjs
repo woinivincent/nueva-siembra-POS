@@ -25,6 +25,8 @@ module.exports = {
           yellow: 'hsl(var(--brand-yellow))',
           red: 'hsl(var(--brand-red))',
           dark: 'hsl(var(--brand-dark))',
+          'green-ink': 'hsl(var(--brand-green-ink))',
+          'orange-ink': 'hsl(var(--brand-orange-ink))',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

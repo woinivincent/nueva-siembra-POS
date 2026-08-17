@@ -92,12 +92,12 @@ export function Suppliers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Proveedores</h1>
-          <p className="text-gray-500">{suppliers.length} proveedores registrados</p>
+          <p className="text-muted-foreground">{suppliers.length} proveedores registrados</p>
         </div>
         
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+          className="px-4 py-2 bg-brand-yellow text-brand-dark rounded-lg hover:opacity-90 flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Nuevo Proveedor
@@ -105,28 +105,28 @@ export function Suppliers() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow p-4">
+      <div className="bg-card rounded-xl shadow p-4">
         <div className="flex flex-wrap gap-4 items-center">
           {/* Búsqueda */}
           <div className="relative flex-1 min-w-[250px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar por nombre, contacto o teléfono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              className="w-full pl-10 pr-4 py-2 text-foreground border border-input rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow"
             />
           </div>
 
           {/* Filtro categoría */}
           {categories.length > 0 && (
             <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-400" />
+              <Filter className="w-5 h-5 text-muted-foreground" />
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-brand-yellow focus:border-brand-yellow"
               >
                 <option value="all">Todas las categorías</option>
                 {categories.map(cat => (
@@ -140,17 +140,17 @@ export function Suppliers() {
 
       {/* Tabla */}
       {isLoading ? (
-        <div className="bg-white rounded-xl shadow p-8">
+        <div className="bg-card rounded-xl shadow p-8">
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-            <span className="ml-3 text-gray-500">Cargando proveedores...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-yellow"></div>
+            <span className="ml-3 text-muted-foreground">Cargando proveedores...</span>
           </div>
         </div>
       ) : suppliers.length === 0 ? (
-        <div className="bg-white rounded-xl shadow p-12 text-center">
-          <Truck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">No hay proveedores</h3>
-          <p className="text-gray-500 mb-4">
+        <div className="bg-card rounded-xl shadow p-12 text-center">
+          <Truck className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay proveedores</h3>
+          <p className="text-muted-foreground mb-4">
             {searchTerm || selectedCategory !== 'all'
               ? 'No se encontraron proveedores con ese criterio'
               : 'Comenzá agregando tu primer proveedor'}
@@ -158,7 +158,7 @@ export function Suppliers() {
           {!searchTerm && selectedCategory === 'all' && (
             <button
               onClick={() => setShowModal(true)}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              className="px-4 py-2 bg-brand-yellow text-brand-dark rounded-lg hover:opacity-90"
             >
               Agregar Proveedor
             </button>
